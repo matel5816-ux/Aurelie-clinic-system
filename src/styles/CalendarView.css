@@ -1,0 +1,175 @@
+.calendar-view {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  padding: 24px;
+}
+
+.calendar-header {
+  margin-bottom: 24px;
+}
+
+.calendar-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.calendar-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.calendar-controls h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 200px;
+  text-align: center;
+}
+
+.calendar-controls .btn-nav {
+  padding: 8px 16px;
+}
+
+.calendar-container {
+  margin-top: 20px;
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.weekday {
+  text-align: center;
+  font-weight: 700;
+  padding: 12px 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  min-height: 500px;
+}
+
+.calendar-day {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px;
+  min-height: 120px;
+  background-color: var(--white);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-day:hover {
+  background-color: rgba(99, 102, 241, 0.05);
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow);
+}
+
+.calendar-day.other-month {
+  background-color: var(--light-bg);
+  opacity: 0.5;
+}
+
+.day-number {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.appointments-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.appointment-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: white;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.appointment-badge:hover {
+  transform: scale(1.05);
+}
+
+.appointment-badge.therapy-雷射 {
+  background-color: #ef4444;
+}
+
+.appointment-badge.therapy-微整 {
+  background-color: #3b82f6;
+}
+
+.appointment-badge.therapy-清粉刺 {
+  background-color: #10b981;
+}
+
+.appointment-badge.therapy-其他 {
+  background-color: #8b5cf6;
+}
+
+.more-count {
+  font-size: 10px;
+  color: var(--text-secondary);
+  padding: 2px 4px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .calendar-view {
+    padding: 16px;
+  }
+
+  .calendar-controls {
+    gap: 12px;
+  }
+
+  .calendar-controls h3 {
+    min-width: auto;
+    font-size: 16px;
+  }
+
+  .calendar-grid {
+    min-height: 400px;
+  }
+
+  .calendar-day {
+    min-height: 100px;
+    padding: 6px;
+  }
+
+  .day-number {
+    font-size: 12px;
+  }
+
+  .appointment-badge {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+}

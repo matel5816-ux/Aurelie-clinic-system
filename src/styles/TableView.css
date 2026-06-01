@@ -1,0 +1,144 @@
+.table-view {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.table-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.appointments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.appointments-table thead {
+  background-color: var(--light-bg);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.appointments-table th {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.appointments-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.appointments-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.appointments-table tbody tr:hover {
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+.appointments-table tbody tr.editing {
+  background-color: rgba(251, 191, 36, 0.1);
+}
+
+.appointments-table input,
+.appointments-table select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.therapy-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.therapy-雷射 {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.therapy-微整 {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.therapy-清粉刺 {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.therapy-其他 {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-未通知 {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.status-已通知 {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.actions .btn {
+  margin-right: 4px;
+  font-size: 11px;
+  padding: 5px 10px;
+}
+
+@media (max-width: 768px) {
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .appointments-table {
+    font-size: 12px;
+  }
+
+  .appointments-table th,
+  .appointments-table td {
+    padding: 12px 8px;
+  }
+}

@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奧蕾莉醫美診所 - 預約管理系統</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #9333ea;
+            --primary-light: #e9d5ff;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            color: var(--gray-900);
+            min-height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ===== 側邊欄 ===== */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-lg);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            padding: 32px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .brand-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-brand h1 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, #ec4899, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-brand p {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            border-left: 3px solid transparent;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border-left-color: var(--secondary);
+        }
+
+        .menu-item.active {
+            background: rgba(236, 72, 153, 0.1);
+            color: var(--secondary);
+            border-left-color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .menu-item i {
+            font-size: 16px;
+            width: 20px;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        /* ===== 主內容區 ===== */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        /* ===== 按鈕樣式 ===== */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-200);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* ===== 儀表板卡片 ===== */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--white) 0%, #f9fafb 100%);
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(147, 51, 234, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary);
+        }
+
+        .stat-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-detail {
+            font-size: 13px;
+            color: var(--gray-600);
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+            opacity: 0.8;
+        }
+
+        /* ===== 快速篩選標籤 ===== */
+        .filter-tabs {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .filter-tab {
+            padding: 10px 16px;
+            border-radius: 20px;
+            border: 2px solid var(--gray-200);
+            background: var(--white);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: var(--gray-700);
+        }
+
+        .filter-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            border-color: transparent;
+        }
+
+        /* ===== 表格樣式 ===== */
+        .data-section {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 28px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--gray-50);
+        }
+
+        .section-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--gray-200);
+            background: var(--white);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--gray-100);
+            border-color: var(--primary);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: var(--gray-50);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--gray-700);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-100);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-confirming { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+        .badge-confirmed { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .badge-notified { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+        .badge-rescheduling { background: rgba(250, 204, 21, 0.1); color: #ca8a04; }
+        .badge-cancelled { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+
+        .badge-laser { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+        .badge-micro { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+        .badge-clean { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .badge-other { background: rgba(147, 51, 234, 0.1); color: #7c3aed; }
+
+        /* ===== 客人管理 ===== */
+        .customers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .customer-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+
+        .customer-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+
+        .customer-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .customer-info {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-bottom: 4px;
+        }
+
+        .customer-history {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-100);
+            font-size: 12px;
+        }
+
+        .history-item {
+            background: var(--gray-50);
+            padding: 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .customer-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        /* ===== 統計圖表 ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .stat-item {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-item-label {
+            font-size: 12px;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+        }
+
+        .stat-item-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ===== 模態框 ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .modal h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-700);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+            background: rgba(147, 51, 234, 0.02);
+        }
+
+        .customer-search {
+            position: relative;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .search-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--gray-100);
+            transition: all 0.2s ease;
+        }
+
+        .search-item:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .form-actions button {
+            flex: 1;
+            padding: 12px;
+        }
+
+        .notification-preview {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            color: var(--gray-700);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-600);
+        }
+
+        .empty-state i {
+            font-size: 56px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        /* ===== 響應式 ===== */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .main-content {
+                margin-left: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 260px;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .header {
+                padding: 16px 20px;
+            }
+
+            .content-area {
+                padding: 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-tabs {
+                flex-direction: column;
+            }
+
+            .filter-tab {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        const { useState, useEffect } = React;
+
+        const APPOINTMENTS_KEY = 'aurelie_appointments';
+        const CUSTOMERS_KEY = 'aurelie_customers';
+
+        const STATUS_OPTIONS = [
+            { value: 'confirming', label: '確認中', icon: '🔵' },
+            { value: 'confirmed', label: '已確認', icon: '🟢' },
+            { value: 'pending', label: '待通知', icon: '🟠' },
+            { value: 'notified', label: '已通知', icon: '✅' },
+            { value: 'rescheduling', label: '改期中', icon: '🟡' },
+            { value: 'cancelled', label: '已取消', icon: '❌' }
+        ];
+
+        function App() {
+            const [view, setView] = useState('dashboard');
+            const [appointments, setAppointments] = useState([]);
+            const [customers, setCustomers] = useState([]);
+            const [showForm, setShowForm] = useState(false);
+            const [showCustomerForm, setShowCustomerForm] = useState(false);
+            const [filterStatus, setFilterStatus] = useState(null);
+            const [selectedNotification, setSelectedNotification] = useState(null);
+            const [dateFilter, setDateFilter] = useState(null); // 'today', 'tomorrow', 'week'
+
+            useEffect(() => {
+                const savedAppts = localStorage.getItem(APPOINTMENTS_KEY);
+                const savedCustomers = localStorage.getItem(CUSTOMERS_KEY);
+                if (savedAppts) {
+                    const data = JSON.parse(savedAppts);
+                    setAppointments(data.map(a => ({ ...a, appointmentDateTime: new Date(a.appointmentDateTime) })));
+                }
+                if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(appointments));
+            }, [appointments]);
+
+            useEffect(() => {
+                localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
+            }, [customers]);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            const getAppointmentsForDate = (date) => {
+                return appointments.filter(a => {
+                    const aDate = new Date(a.appointmentDateTime);
+                    aDate.setHours(0, 0, 0, 0);
+                    return aDate.getTime() === date.getTime();
+                });
+            };
+
+            const getAppointmentsForPeriod = (startDate, endDate) => {
+                return appointments.filter(a => {
+                    const aDate = new Date(a.appointmentDateTime);
+                    aDate.setHours(0, 0, 0, 0);
+                    return aDate >= startDate && aDate <= endDate;
+                });
+            };
+
+            const todayAppts = getAppointmentsForDate(today);
+            const tomorrowAppts = getAppointmentsForDate(tomorrow);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            const weekAppts = getAppointmentsForPeriod(weekStart, weekEnd);
+            const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            const monthAppts = getAppointmentsForPeriod(monthStart, monthEnd);
+
+            const getTherapyStats = () => {
+                const stats = {};
+                weekAppts.forEach(apt => {
+                    stats[apt.therapyType] = (stats[apt.therapyType] || 0) + 1;
+                });
+                return stats;
+            };
+
+            const therapyStats = getTherapyStats();
+
+            const addAppointment = (data) => {
+                setAppointments([...appointments, { ...data, id: Date.now().toString() }]);
+                setShowForm(false);
+            };
+
+            const deleteAppointment = (id) => {
+                setAppointments(appointments.filter(a => a.id !== id));
+            };
+
+            const updateAppointment = (id, updates) => {
+                setAppointments(appointments.map(a => a.id === id ? { ...a, ...updates } : a));
+            };
+
+            const addCustomer = (data) => {
+                setCustomers([...customers, { ...data, id: Date.now().toString() }]);
+                setShowCustomerForm(false);
+            };
+
+            const deleteCustomer = (id) => {
+                setCustomers(customers.filter(c => c.id !== id));
+            };
+
+            const getFilteredAppointments = () => {
+                if (dateFilter === 'today') return todayAppts;
+                if (dateFilter === 'tomorrow') return tomorrowAppts;
+                if (dateFilter === 'week') return weekAppts;
+                if (filterStatus) return appointments.filter(a => a.status === filterStatus);
+                return appointments;
+            };
+
+            return React.createElement('div', { className: 'app-container' },
+                React.createElement(Sidebar, { view, setView, appointments, customers }),
+                React.createElement('div', { className: 'main-content' },
+                    React.createElement('header', { className: 'header' },
+                        React.createElement('h1', null,
+                            view === 'dashboard' ? '📊 儀表板' :
+                            view === 'appointments' && dateFilter === 'today' ? '📅 今日預約' :
+                            view === 'appointments' && dateFilter === 'tomorrow' ? '📌 明日預約' :
+                            view === 'appointments' && dateFilter === 'week' ? '📊 本周預約' :
+                            view === 'appointments' ? '📋 預約管理' :
+                            view === 'customers' ? '👥 客人管理' : '📝 新增預約'),
+                        React.createElement('div', { className: 'header-actions' },
+                            React.createElement('button', { className: 'btn btn-primary', onClick: () => setShowForm(true) },
+                                React.createElement('i', { className: 'fas fa-plus' }),
+                                '新增預約'
+                            ),
+                            view === 'customers' && React.createElement('button', { className: 'btn btn-primary', onClick: () => setShowCustomerForm(true) },
+                                React.createElement('i', { className: 'fas fa-user-plus' }),
+                                '新增客人'
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: 'content-area' },
+                        view === 'dashboard' && React.createElement(Dashboard, {
+                            todayCount: todayAppts.length,
+                            tomorrowCount: tomorrowAppts.length,
+                            weekCount: weekAppts.length,
+                            monthCount: monthAppts.length,
+                            therapyStats,
+                            onViewDate: (period) => { setDateFilter(period); setView('appointments'); }
+                        }),
+                        view === 'appointments' && React.createElement(AppointmentsView, {
+                            appointments: getFilteredAppointments(),
+                            dateFilter,
+                            onBack: () => { setDateFilter(null); setView('dashboard'); },
+                            onDelete: deleteAppointment,
+                            onUpdate: updateAppointment,
+                            onSelectAppointment: setSelectedNotification
+                        }),
+                        view === 'customers' && React.createElement(CustomersView, {
+                            customers,
+                            appointments,
+                            onDelete: deleteCustomer
+                        })
+                    )
+                ),
+                showForm && React.createElement(AppointmentForm, {
+                    customers,
+                    onSubmit: addAppointment,
+                    onCancel: () => setShowForm(false)
+                }),
+                showCustomerForm && React.createElement(CustomerForm, {
+                    onSubmit: addCustomer,
+                    onCancel: () => setShowCustomerForm(false)
+                }),
+                selectedNotification && React.createElement(NotificationModal, {
+                    appointment: selectedNotification,
+                    onClose: () => setSelectedNotification(null),
+                    onNotified: () => {
+                        updateAppointment(selectedNotification.id, { status: 'notified' });
+                        setSelectedNotification(null);
+                    }
+                })
+            );
+        }
+
+        function Sidebar({ view, setView, appointments, customers }) {
+            return React.createElement('aside', { className: 'sidebar' },
+                React.createElement('div', { className: 'sidebar-brand' },
+                    React.createElement('div', { className: 'brand-icon' }, '✨'),
+                    React.createElement('h1', null, 'Aurelie'),
+                    React.createElement('p', null, 'Aesthetic Clinic')
+                ),
+                React.createElement('nav', { className: 'sidebar-menu' },
+                    React.createElement('button', {
+                        className: `menu-item ${view === 'dashboard' ? 'active' : ''}`,
+                        onClick: () => setView('dashboard')
+                    },
+                        React.createElement('i', { className: 'fas fa-chart-line' }),
+                        '儀表板'
+                    ),
+                    React.createElement('button', {
+                        className: `menu-item ${view === 'appointments' ? 'active' : ''}`,
+                        onClick: () => setView('appointments')
+                    },
+                        React.createElement('i', { className: 'fas fa-list' }),
+                        '預約管理'
+                    ),
+                    React.createElement('button', {
+                        className: `menu-item ${view === 'customers' ? 'active' : ''}`,
+                        onClick: () => setView('customers')
+                    },
+                        React.createElement('i', { className: 'fas fa-users' }),
+                        '客人管理'
+                    )
+                ),
+                React.createElement('div', { className: 'sidebar-footer' },
+                    `預約：${appointments.length} | 客人：${customers.length}`
+                )
+            );
+        }
+
+        function Dashboard({ todayCount, tomorrowCount, weekCount, monthCount, therapyStats, onViewDate }) {
+            return React.createElement('div', null,
+                React.createElement('div', { className: 'dashboard' },
+                    React.createElement('div', {
+                        className: 'stat-card',
+                        onClick: () => onViewDate('today')
+                    },
+                        React.createElement('div', { className: 'stat-content' },
+                            React.createElement('div', { className: 'stat-icon' }, '📅'),
+                            React.createElement('div', { className: 'stat-label' }, '今日預約'),
+                            React.createElement('div', { className: 'stat-value' }, todayCount),
+                            React.createElement('div', { className: 'stat-detail' }, new Date().toLocaleDateString('zh-TW'))
+                        )
+                    ),
+                    React.createElement('div', {
+                        className: 'stat-card',
+                        onClick: () => onViewDate('tomorrow')
+                    },
+                        React.createElement('div', { className: 'stat-content' },
+                            React.createElement('div', { className: 'stat-icon' }, '📌'),
+                            React.createElement('div', { className: 'stat-label' }, '明日預約'),
+                            React.createElement('div', { className: 'stat-value' }, tomorrowCount),
+                            React.createElement('div', { className: 'stat-detail' }, new Date(Date.now() + 86400000).toLocaleDateString('zh-TW'))
+                        )
+                    ),
+                    React.createElement('div', {
+                        className: 'stat-card',
+                        onClick: () => onViewDate('week')
+                    },
+                        React.createElement('div', { className: 'stat-content' },
+                            React.createElement('div', { className: 'stat-icon' }, '📊'),
+                            React.createElement('div', { className: 'stat-label' }, '本周預約'),
+                            React.createElement('div', { className: 'stat-value' }, weekCount),
+                            React.createElement('div', { className: 'stat-detail' }, '本周共計')
+                        )
+                    ),
+                    React.createElement('div', {
+                        className: 'stat-card'
+                    },
+                        React.createElement('div', { className: 'stat-content' },
+                            React.createElement('div', { className: 'stat-icon' }, '📈'),
+                            React.createElement('div', { className: 'stat-label' }, '本月預約'),
+                            React.createElement('div', { className: 'stat-value' }, monthCount),
+                            React.createElement('div', { className: 'stat-detail' }, '本月共計')
+                        )
+                    )
+                ),
+                React.createElement('h2', { style: { fontSize: '18px', fontWeight: '700', marginBottom: '20px', marginTop: '40px' } }, '本週療程統計'),
+                React.createElement('div', { className: 'stats-grid' },
+                    Object.entries(therapyStats).length > 0 ?
+                        Object.entries(therapyStats).map(([therapy, count]) =>
+                            React.createElement('div', { key: therapy, className: 'stat-item' },
+                                React.createElement('div', { className: 'stat-item-label' }, therapy),
+                                React.createElement('div', { className: 'stat-item-value' }, count)
+                            )
+                        ) :
+                        React.createElement('div', { style: { gridColumn: '1 / -1', textAlign: 'center', color: 'var(--gray-600)' } }, '暫無資料')
+                )
+            );
+        }
+
+        function AppointmentsView({ appointments, dateFilter, onBack, onDelete, onUpdate, onSelectAppointment }) {
+            return React.createElement('div', null,
+                dateFilter && React.createElement('div', { style: { marginBottom: '24px' } },
+                    React.createElement('button', { className: 'back-btn', onClick: onBack },
+                        React.createElement('i', { className: 'fas fa-arrow-left' }),
+                        '返回儀表板'
+                    )
+                ),
+                React.createElement('div', { className: 'data-section' },
+                    React.createElement('div', { className: 'section-header' },
+                        React.createElement('h2', null, `${appointments.length} 筆預約`)
+                    ),
+                    React.createElement('div', { className: 'table-container' },
+                        appointments.length > 0 ?
+                            React.createElement('table', null,
+                                React.createElement('thead', null,
+                                    React.createElement('tr', null,
+                                        React.createElement('th', null, '客人'),
+                                        React.createElement('th', null, '預約時間'),
+                                        React.createElement('th', null, '療程'),
+                                        React.createElement('th', null, '人員'),
+                                        React.createElement('th', null, '狀態'),
+                                        React.createElement('th', null, '備註'),
+                                        React.createElement('th', null, '操作')
+                                    )
+                                ),
+                                React.createElement('tbody', null,
+                                    appointments.map(apt =>
+                                        React.createElement('tr', {
+                                            key: apt.id,
+                                            onClick: () => onSelectAppointment(apt),
+                                            style: { cursor: 'pointer' }
+                                        },
+                                            React.createElement('td', null, apt.clientName),
+                                            React.createElement('td', null, new Date(apt.appointmentDateTime).toLocaleString('zh-TW')),
+                                            React.createElement('td', null,
+                                                React.createElement('span', { className: `badge badge-${getTherapyBadgeClass(apt.therapyType)}` }, apt.therapyType)
+                                            ),
+                                            React.createElement('td', null, apt.staffName),
+                                            React.createElement('td', null,
+                                                React.createElement('select', {
+                                                    value: apt.status,
+                                                    onChange: (e) => { e.stopPropagation(); onUpdate(apt.id, { status: e.target.value }); },
+                                                    onClick: (e) => e.stopPropagation(),
+                                                    style: { padding: '6px 8px', borderRadius: '4px', border: '1px solid var(--gray-200)', fontSize: '12px' }
+                                                },
+                                                    STATUS_OPTIONS.map(s =>
+                                                        React.createElement('option', { key: s.value, value: s.value }, `${s.icon} ${s.label}`)
+                                                    )
+                                                )
+                                            ),
+                                            React.createElement('td', null,
+                                                React.createElement('span', { title: apt.notes, style: { fontSize: '12px', color: 'var(--gray-600)', maxWidth: '100px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, apt.notes || '-')
+                                            ),
+                                            React.createElement('td', null,
+                                                React.createElement('button', {
+                                                    className: 'btn btn-small btn-danger',
+                                                    onClick: (e) => { e.stopPropagation(); onDelete(apt.id); }
+                                                },
+                                                    React.createElement('i', { className: 'fas fa-trash' })
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ) :
+                            React.createElement('div', { className: 'empty-state' },
+                                React.createElement('i', { className: 'fas fa-inbox' }),
+                                React.createElement('p', null, '暫無預約')
+                            )
+                    )
+                )
+            );
+        }
+
+        function CustomersView({ customers, appointments, onDelete }) {
+            return React.createElement('div', null,
+                React.createElement('div', { className: 'customers-grid' },
+                    customers.length > 0 ?
+                        customers.map(customer => {
+                            const customerAppts = appointments.filter(a => a.clientName === customer.name);
+                            const sortedAppts = customerAppts.sort((a, b) => new Date(b.appointmentDateTime) - new Date(a.appointmentDateTime));
+                            return React.createElement('div', { key: customer.id, className: 'customer-card' },
+                                React.createElement('div', { className: 'customer-name' }, customer.name),
+                                React.createElement('div', { className: 'customer-info' },
+                                    React.createElement('i', { className: 'fas fa-phone' }), ' ' + customer.phone
+                                ),
+                                customer.notes && React.createElement('div', { className: 'customer-info' },
+                                    React.createElement('i', { className: 'fas fa-note-sticky' }), ' ' + customer.notes
+                                ),
+                                React.createElement('div', { className: 'customer-history' },
+                                    React.createElement('div', { style: { fontWeight: '600', marginBottom: '8px', color: 'var(--primary)' } }, `📅 預約記錄 (${sortedAppts.length})`),
+                                    sortedAppts.length > 0 ?
+                                        sortedAppts.map((apt, idx) =>
+                                            React.createElement('div', { key: idx, className: 'history-item' },
+                                                React.createElement('span', null, apt.therapyType),
+                                                React.createElement('span', { style: { fontSize: '11px', color: 'var(--gray-600)' } }, new Date(apt.appointmentDateTime).toLocaleDateString('zh-TW'))
+                                            )
+                                        ) :
+                                        React.createElement('div', { style: { fontSize: '12px', color: 'var(--gray-600)' } }, '暫無預約')
+                                ),
+                                React.createElement('div', { style: { display: 'flex', gap: '8px', marginTop: '12px' } },
+                                    React.createElement('button', { className: 'btn btn-small btn-danger', onClick: () => onDelete(customer.id), style: { flex: 1 } },
+                                        React.createElement('i', { className: 'fas fa-trash' }),
+                                        '刪除'
+                                    )
+                                )
+                            );
+                        }) :
+                        React.createElement('div', { className: 'empty-state', style: { gridColumn: '1 / -1' } },
+                            React.createElement('i', { className: 'fas fa-users' }),
+                            React.createElement('p', null, '暫無客人資料')
+                        )
+                )
+            );
+        }
+
+        function NotificationModal({ appointment, onClose, onNotified }) {
+            const [copied, setCopied] = useState(false);
+
+            const apptDate = new Date(appointment.appointmentDateTime);
+            const dateStr = apptDate.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' });
+            const timeStr = apptDate.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            const text = `📢 親愛的 ${appointment.clientName} 您好
+
+感謝預約奧蕾莉醫美診所！
+
+🗓️ 明日有您的療程預約：
+⏰ 時間：${dateStr} ${timeStr}
+💆 療程：${appointment.therapyType}
+👨‍⚕️ 服務員：${appointment.staffName}
+
+${appointment.notes ? `📝 特別提醒：${appointment.notes}\n` : ''}
+請準時到診，若需更改時間請盡早告知我們。
+
+期待為您服務！✨
+
+奧蕾莉醫美診所
+Aurelie Aesthetic Clinic`;
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return React.createElement('div', { className: 'modal-overlay', onClick: onClose },
+                React.createElement('div', {
+                    className: 'modal',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    React.createElement('h2', null, `📧 ${appointment.clientName} - 通知文案`),
+                    React.createElement('div', { className: 'notification-preview' }, text),
+                    React.createElement('div', { style: { display: 'flex', gap: '12px' } },
+                        React.createElement('button', {
+                            className: 'btn btn-primary',
+                            onClick: () => {
+                                copyToClipboard();
+                                setTimeout(() => {
+                                    onNotified();
+                                }, 500);
+                            },
+                            style: { flex: 1 }
+                        },
+                            React.createElement('i', { className: copied ? 'fas fa-check' : 'fas fa-copy' }),
+                            copied ? '✓ 已複製' : '複製並標記已通知'
+                        ),
+                        React.createElement('button', {
+                            className: 'btn btn-secondary',
+                            onClick: onClose,
+                            style: { flex: 1 }
+                        },
+                            '關閉'
+                        )
+                    )
+                )
+            );
+        }
+
+        function AppointmentForm({ customers, onSubmit, onCancel }) {
+            const [data, setData] = useState({
+                clientName: '',
+                appointmentDateTime: '',
+                therapyType: '雷射',
+                staffName: '',
+                phoneNumber: '',
+                status: 'pending',
+                notes: ''
+            });
+
+            const [useExistingCustomer, setUseExistingCustomer] = useState(false);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [showSearchResults, setShowSearchResults] = useState(false);
+
+            const filteredCustomers = customers.filter(c =>
+                c.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (data.clientName && data.appointmentDateTime && data.therapyType && data.staffName && data.phoneNumber) {
+                    onSubmit({ ...data, appointmentDateTime: new Date(data.appointmentDateTime) });
+                } else {
+                    alert('請填寫所有必填欄位');
+                }
+            };
+
+            return React.createElement('div', { className: 'modal-overlay' },
+                React.createElement('div', { className: 'modal' },
+                    React.createElement('h2', null, '✨ 新增預約'),
+                    React.createElement('form', { onSubmit: handleSubmit },
+                        React.createElement('div', { style: { display: 'flex', gap: '12px', marginBottom: '20px' } },
+                            React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
+                                React.createElement('input', { type: 'radio', checked: !useExistingCustomer, onChange: () => { setUseExistingCustomer(false); setSearchQuery(''); } }),
+                                '新增客人'
+                            ),
+                            React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
+                                React.createElement('input', { type: 'radio', checked: useExistingCustomer, onChange: () => setUseExistingCustomer(true) }),
+                                '選擇現有客人'
+                            )
+                        ),
+                        useExistingCustomer ?
+                            React.createElement('div', { className: 'customer-search form-group' },
+                                React.createElement('label', null, '👤 客人搜尋 *'),
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: searchQuery,
+                                    onChange: (e) => {
+                                        setSearchQuery(e.target.value);
+                                        setShowSearchResults(true);
+                                    },
+                                    onFocus: () => setShowSearchResults(true),
+                                    placeholder: '輸入客人名字搜尋...',
+                                    required: true
+                                }),
+                                showSearchResults && searchQuery && React.createElement('div', { className: 'search-results' },
+                                    filteredCustomers.length > 0 ?
+                                        filteredCustomers.map(c =>
+                                            React.createElement('div', {
+                                                key: c.id,
+                                                className: 'search-item',
+                                                onClick: () => {
+                                                    setData({
+                                                        ...data,
+                                                        clientName: c.name,
+                                                        phoneNumber: c.phone
+                                                    });
+                                                    setSearchQuery(c.name);
+                                                    setShowSearchResults(false);
+                                                }
+                                            },
+                                                `${c.name} - ${c.phone}`
+                                            )
+                                        ) :
+                                        React.createElement('div', { className: 'search-item' }, '找不到客人')
+                                )
+                            ) :
+                            React.createElement('div', { className: 'form-row' },
+                                React.createElement('div', { className: 'form-group' },
+                                    React.createElement('label', null, '👤 客人姓名 *'),
+                                    React.createElement('input', { type: 'text', value: data.clientName, onChange: (e) => setData({ ...data, clientName: e.target.value }), placeholder: '輸入客人名字', required: true })
+                                ),
+                                React.createElement('div', { className: 'form-group' },
+                                    React.createElement('label', null, '📞 電話號碼 *'),
+                                    React.createElement('input', { type: 'tel', value: data.phoneNumber, onChange: (e) => setData({ ...data, phoneNumber: e.target.value }), placeholder: '輸入電話號碼', required: true })
+                                )
+                            ),
+                        React.createElement('div', { className: 'form-row' },
+                            React.createElement('div', { className: 'form-group' },
+                                React.createElement('label', null, '📅 預約日期時間 *'),
+                                React.createElement('input', { type: 'datetime-local', value: data.appointmentDateTime, onChange: (e) => setData({ ...data, appointmentDateTime: e.target.value }), required: true })
+                            ),
+                            React.createElement('div', { className: 'form-group' },
+                                React.createElement('label', null, '💆 療程項目 *'),
+                                React.createElement('select', { value: data.therapyType, onChange: (e) => setData({ ...data, therapyType: e.target.value }), required: true },
+                                    React.createElement('option', null, '雷射'),
+                                    React.createElement('option', null, '微整'),
+                                    React.createElement('option', null, '清粉刺'),
+                                    React.createElement('option', null, '其他')
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'form-row' },
+                            React.createElement('div', { className: 'form-group' },
+                                React.createElement('label', null, '👨‍⚕️ 負責人員 *'),
+                                React.createElement('input', { type: 'text', value: data.staffName, onChange: (e) => setData({ ...data, staffName: e.target.value }), placeholder: '輸入人員名字', required: true })
+                            ),
+                            React.createElement('div', { className: 'form-group' },
+                                React.createElement('label', null, '🏷️ 預約狀態'),
+                                React.createElement('select', { value: data.status, onChange: (e) => setData({ ...data, status: e.target.value }) },
+                                    STATUS_OPTIONS.map(s => React.createElement('option', { key: s.value, value: s.value }, `${s.icon} ${s.label}`))
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'form-group' },
+                            React.createElement('label', null, '📝 備註（特殊需求/過敏等）'),
+                            React.createElement('textarea', { value: data.notes, onChange: (e) => setData({ ...data, notes: e.target.value }), placeholder: '例如：對碘過敏、怕痛、敏感肌膚等', rows: 3 })
+                        ),
+                        React.createElement('div', { className: 'form-actions' },
+                            React.createElement('button', { type: 'submit', className: 'btn btn-primary' }, '新增預約'),
+                            React.createElement('button', { type: 'button', className: 'btn btn-secondary', onClick: onCancel }, '取消')
+                        )
+                    )
+                )
+            );
+        }
+
+        function CustomerForm({ onSubmit, onCancel }) {
+            const [data, setData] = useState({
+                name: '',
+                phone: '',
+                notes: ''
+            });
+
+            return React.createElement('div', { className: 'modal-overlay' },
+                React.createElement('div', { className: 'modal' },
+                    React.createElement('h2', null, '👥 新增客人'),
+                    React.createElement('form', {
+                        onSubmit: (e) => {
+                            e.preventDefault();
+                            if (data.name && data.phone) {
+                                onSubmit(data);
+                            }
+                        }
+                    },
+                        React.createElement('div', { className: 'form-group' },
+                            React.createElement('label', null, '👤 客人名字 *'),
+                            React.createElement('input', { type: 'text', value: data.name, onChange: (e) => setData({ ...data, name: e.target.value }), placeholder: '輸入客人名字', required: true })
+                        ),
+                        React.createElement('div', { className: 'form-group' },
+                            React.createElement('label', null, '📞 電話號碼 *'),
+                            React.createElement('input', { type: 'tel', value: data.phone, onChange: (e) => setData({ ...data, phone: e.target.value }), placeholder: '輸入電話號碼', required: true })
+                        ),
+                        React.createElement('div', { className: 'form-group' },
+                            React.createElement('label', null, '📝 備註（過敏/特殊需求等）'),
+                            React.createElement('textarea', { value: data.notes, onChange: (e) => setData({ ...data, notes: e.target.value }), placeholder: '輸入客人相關資訊', rows: 3 })
+                        ),
+                        React.createElement('div', { className: 'form-actions' },
+                            React.createElement('button', { type: 'submit', className: 'btn btn-primary' }, '新增客人'),
+                            React.createElement('button', { type: 'button', className: 'btn btn-secondary', onClick: onCancel }, '取消')
+                        )
+                    )
+                )
+            );
+        }
+
+        function getTherapyBadgeClass(therapy) {
+            switch(therapy) {
+                case '雷射': return 'laser';
+                case '微整': return 'micro';
+                case '清粉刺': return 'clean';
+                default: return 'other';
+            }
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>
