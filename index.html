@@ -1649,7 +1649,18 @@ Aurelie Aesthetic Clinic`;
         }
 
         function AppointmentForm({ customers, onSubmit, onCancel, allAppointments, checkConflict, editingAppointment }) {
-            const [data, setData] = useState(editingAppointment || {
+            const [data, setData] = useState(() => editingAppointment ? {
+                clientName: editingAppointment.clientName,
+                appointmentDateTime: editingAppointment.appointmentDateTime.toISOString().slice(0, 16),
+                therapyType: editingAppointment.therapyType,
+                staffName: editingAppointment.staffName,
+                phoneNumber: editingAppointment.phoneNumber,
+                status: editingAppointment.status,
+                notes: editingAppointment.notes || '',
+                price: editingAppointment.price || 0,
+                isNextAppointmentDue: editingAppointment.isNextAppointmentDue || false,
+                id: editingAppointment.id
+            } : {
                 clientName: '',
                 appointmentDateTime: '',
                 therapyType: '雷射',
@@ -1662,8 +1673,8 @@ Aurelie Aesthetic Clinic`;
                 id: Date.now().toString()
             });
 
-            const [useExistingCustomer, setUseExistingCustomer] = useState(false);
-            const [searchQuery, setSearchQuery] = useState('');
+            const [useExistingCustomer, setUseExistingCustomer] = useState(editingAppointment ? true : false);
+            const [searchQuery, setSearchQuery] = useState(editingAppointment ? editingAppointment.clientName : '');
             const [showSearchResults, setShowSearchResults] = useState(false);
 
             const filteredCustomers = customers.filter(c =>
@@ -1855,14 +1866,24 @@ Aurelie Aesthetic Clinic`;
         }
 
         function CustomerForm({ onSubmit, onCancel, editingCustomer }) {
-            const [data, setData] = useState(editingCustomer || {
+            const [data, setData] = useState(() => editingCustomer ? {
+                name: editingCustomer.name,
+                phone: editingCustomer.phone,
+                notes: editingCustomer.notes || '',
+                isVIP: editingCustomer.isVIP || false,
+                tags: editingCustomer.tags || [],
+                isBlacklisted: editingCustomer.isBlacklisted || false,
+                therapyHistory: editingCustomer.therapyHistory || [],
+                id: editingCustomer.id
+            } : {
                 name: '',
                 phone: '',
                 notes: '',
                 isVIP: false,
                 tags: [],
                 isBlacklisted: false,
-                therapyHistory: []
+                therapyHistory: [],
+                id: Date.now().toString()
             });
             const [newTag, setNewTag] = useState('');
             const AVAILABLE_TAGS = ['常客', '轉介', '會員', '初診', '複診'];
