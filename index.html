@@ -428,8 +428,18 @@
         .badge-cancelled { background: rgba(201, 83, 76, 0.1); color: var(--danger); }
 
         .badge-laser { background: rgba(212, 117, 124, 0.1); color: var(--primary); }
+        .badge-picosecond { background: rgba(212, 117, 124, 0.15); color: #c9534c; }
         .badge-micro { background: rgba(74, 157, 111, 0.1); color: var(--success); }
+        .badge-botox { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+        .badge-hyaluronic { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
         .badge-clean { background: rgba(236, 151, 31, 0.1); color: var(--warning); }
+        .badge-acne { background: rgba(59, 130, 246, 0.15); color: #1d4ed8; }
+        .badge-tattoo { background: rgba(100, 100, 100, 0.15); color: #374151; }
+        .badge-fat-dissolve { background: rgba(236, 151, 31, 0.15); color: #d97706; }
+        .badge-thread-lift { background: rgba(74, 157, 111, 0.15); color: #047857; }
+        .badge-aqua-light { background: rgba(168, 85, 247, 0.15); color: #9333ea; }
+        .badge-peel { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; }
+        .badge-photon { background: rgba(212, 117, 124, 0.15); color: #be123c; }
         .badge-other { background: rgba(100, 100, 100, 0.1); color: var(--gray); }
 
         /* ===== CUSTOMER CARDS ===== */
@@ -1749,8 +1759,18 @@ Aurelie Aesthetic Clinic`;
                                 React.createElement('label', null, '療程項目'),
                                 React.createElement('select', { value: data.therapyType, onChange: (e) => setData({ ...data, therapyType: e.target.value }), required: true },
                                     React.createElement('option', null, '雷射'),
+                                    React.createElement('option', null, '皮秒雷射'),
                                     React.createElement('option', null, '微整'),
+                                    React.createElement('option', null, '肉毒桿菌'),
+                                    React.createElement('option', null, '玻尿酸'),
                                     React.createElement('option', null, '清粉刺'),
+                                    React.createElement('option', null, '祛痘治療'),
+                                    React.createElement('option', null, '除刺青'),
+                                    React.createElement('option', null, '脂肪溶解針'),
+                                    React.createElement('option', null, '埋線提升'),
+                                    React.createElement('option', null, '水光針'),
+                                    React.createElement('option', null, '果酸煥膚'),
+                                    React.createElement('option', null, '光子嫩膚'),
                                     React.createElement('option', null, '其他')
                                 )
                             )
@@ -1892,8 +1912,18 @@ Aurelie Aesthetic Clinic`;
         function getTherapyBadgeClass(therapy) {
             switch(therapy) {
                 case '雷射': return 'laser';
+                case '皮秒雷射': return 'picosecond';
                 case '微整': return 'micro';
+                case '肉毒桿菌': return 'botox';
+                case '玻尿酸': return 'hyaluronic';
                 case '清粉刺': return 'clean';
+                case '祛痘治療': return 'acne';
+                case '除刺青': return 'tattoo';
+                case '脂肪溶解針': return 'fat-dissolve';
+                case '埋線提升': return 'thread-lift';
+                case '水光針': return 'aqua-light';
+                case '果酸煥膚': return 'peel';
+                case '光子嫩膚': return 'photon';
                 default: return 'other';
             }
         }
