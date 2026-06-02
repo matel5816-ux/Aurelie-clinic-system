@@ -1107,7 +1107,10 @@
 
             const getAppointmentsForDate = (date) => {
                 return appointments.filter(a => {
-                    const aDate = new Date(a.appointmentDateTime);
+                    let aDate = a.appointmentDateTime;
+                    if (typeof aDate === 'string') {
+                        aDate = new Date(aDate);
+                    }
                     aDate.setHours(0, 0, 0, 0);
                     return aDate.getTime() === date.getTime();
                 });
@@ -1115,7 +1118,10 @@
 
             const getAppointmentsForPeriod = (startDate, endDate) => {
                 return appointments.filter(a => {
-                    const aDate = new Date(a.appointmentDateTime);
+                    let aDate = a.appointmentDateTime;
+                    if (typeof aDate === 'string') {
+                        aDate = new Date(aDate);
+                    }
                     aDate.setHours(0, 0, 0, 0);
                     return aDate >= startDate && aDate <= endDate;
                 });
@@ -1205,7 +1211,10 @@
                     const end = parseLocalDate(customDateRange.end);
                     end.setHours(23, 59, 59, 999);
                     filtered = filtered.filter(a => {
-                        const aDate = new Date(a.appointmentDateTime);
+                        let aDate = a.appointmentDateTime;
+                        if (typeof aDate === 'string') {
+                            aDate = new Date(aDate);
+                        }
                         return aDate >= start && aDate <= end;
                     });
                 } else if (dateFilter === 'today') {
