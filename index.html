@@ -13,6 +13,7 @@
         :root {
             --primary: #d4757c;
             --primary-dark: #8b3a42;
+            --primary-light: #f5e8eb;
             --secondary: #2d2d2d;
             --accent: #f5f5f5;
             --success: #4a9d6f;
@@ -26,6 +27,8 @@
             --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
             --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --shadow-focus: 0 0 0 3px rgba(212, 117, 124, 0.1);
+            --border-light: #f0f0f0;
         }
 
         * {
@@ -48,8 +51,8 @@
 
         /* ===== SIDEBAR ===== */
         .sidebar {
-            width: 260px;
-            background: var(--dark);
+            width: 280px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%);
             color: var(--white);
             display: flex;
             flex-direction: column;
@@ -58,6 +61,7 @@
             overflow-y: auto;
             z-index: 100;
             transition: transform 0.3s ease;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
         }
 
         .sidebar-brand {
@@ -109,32 +113,36 @@
         }
 
         .menu-item {
-            padding: 14px 20px;
+            padding: 12px 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 12px;
             font-size: 13px;
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             color: rgba(255, 255, 255, 0.7);
             border: none;
             background: none;
             width: 100%;
             text-align: left;
             border-left: 3px solid transparent;
+            margin: 4px 0;
         }
 
         .menu-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.1);
             color: var(--white);
+            border-left-color: var(--primary);
+            padding-left: 24px;
         }
 
         .menu-item.active {
-            background: rgba(212, 117, 124, 0.15);
+            background: rgba(212, 117, 124, 0.2);
             color: var(--primary);
             border-left-color: var(--primary);
             font-weight: 600;
+            padding-left: 24px;
         }
 
         .menu-item i {
@@ -258,21 +266,22 @@
         }
 
         .stat-card {
-            background: var(--white);
-            border: 1px solid var(--light-gray);
-            border-radius: 8px;
-            padding: 24px;
+            background: linear-gradient(135deg, var(--white) 0%, #fbfbfb 100%);
+            border: 1px solid #efefef;
+            border-radius: 12px;
+            padding: 28px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-md);
             position: relative;
             overflow: hidden;
         }
 
         .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-lg);
             border-color: var(--primary);
+            background: linear-gradient(135deg, var(--white) 0%, var(--primary-light) 100%);
         }
 
         .stat-card::before {
@@ -292,30 +301,31 @@
         }
 
         .stat-label {
-            font-size: 11px;
+            font-size: 13px;
             color: var(--gray);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .stat-value {
-            font-size: 36px;
+            font-size: 40px;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            line-height: 1.2;
         }
 
         .stat-detail {
             font-size: 12px;
-            color: var(--gray);
+            color: #888;
         }
 
         .stat-icon {
-            font-size: 24px;
-            margin-bottom: 12px;
-            opacity: 0.8;
+            font-size: 32px;
+            margin-bottom: 16px;
+            opacity: 0.9;
         }
 
         /* ===== FILTER TABS ===== */
@@ -388,29 +398,29 @@
         }
 
         thead {
-            background: var(--accent);
-            border-bottom: 1px solid var(--light-gray);
+            background: linear-gradient(135deg, #f5f5f5 0%, #f9f9f9 100%);
+            border-bottom: 2px solid var(--light-gray);
         }
 
         th {
-            padding: 14px 16px;
+            padding: 16px 16px;
             text-align: left;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--secondary);
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
         }
 
         td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--light-gray);
+            padding: 16px 16px;
+            border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
             transition: background 0.2s ease;
         }
 
         tbody tr:hover {
-            background: var(--light);
+            background: rgba(212, 117, 124, 0.03);
         }
 
         /* ===== BADGES ===== */
