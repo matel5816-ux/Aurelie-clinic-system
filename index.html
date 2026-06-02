@@ -667,13 +667,8 @@
 
         @media (max-width: 768px) {
             .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
                 width: 260px;
-                height: 100vh;
-                z-index: 200;
-                box-shadow: var(--shadow-xl);
+                z-index: 999;
             }
 
             .main-content {
@@ -681,7 +676,9 @@
             }
 
             .hamburger-btn {
-                display: inline-block !important;
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: center;
             }
 
             .header {
@@ -837,11 +834,11 @@
             const [showCustomerForm, setShowCustomerForm] = useState(false);
             const [filterStatus, setFilterStatus] = useState(null);
             const [selectedNotification, setSelectedNotification] = useState(null);
-            const [dateFilter, setDateFilter] = useState(null); // 'today', 'tomorrow', 'week', 'month'
+            const [dateFilter, setDateFilter] = useState(null);
             const [customerSearchQuery, setCustomerSearchQuery] = useState('');
             const [customDateRange, setCustomDateRange] = useState({ start: null, end: null });
             const [sidebarOpen, setSidebarOpen] = useState(false);
-            const [statsView, setStatsView] = useState('therapy'); // 'therapy', 'staff', 'status'
+            const [statsView, setStatsView] = useState('therapy');
 
             useEffect(() => {
                 const savedAppts = localStorage.getItem(APPOINTMENTS_KEY);
@@ -1049,7 +1046,7 @@
                         React.createElement('button', {
                             className: 'hamburger-btn',
                             onClick: () => setSidebarOpen(!sidebarOpen),
-                            style: { display: 'none', background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', marginRight: '16px' }
+                            style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', marginRight: '16px' }
                         },
                             React.createElement('i', { className: 'fas fa-bars' })
                         ),
@@ -1059,7 +1056,9 @@
                             view === 'appointments' && dateFilter === 'tomorrow' ? '📌 明日預約' :
                             view === 'appointments' && dateFilter === 'week' ? '📊 本周預約' :
                             view === 'appointments' ? '📋 預約管理' :
-                            view === 'customers' ? '👥 客人管理' : '📝 新增預約'),
+                            view === 'customers' ? '👥 客人管理' :
+                            view === 'revisit' ? '⏰ 待回訪客人' :
+                            view === 'statistics' ? '📈 統計報表' : '設定'),
                         React.createElement('div', { className: 'header-actions' },
                             React.createElement('button', { className: 'btn btn-primary', onClick: () => setShowForm(true) },
                                 React.createElement('i', { className: 'fas fa-plus' }),
@@ -1102,6 +1101,21 @@
                             searchQuery: customerSearchQuery,
                             setSearchQuery: setCustomerSearchQuery,
                             onDelete: deleteCustomer
+                        }),
+                        view === 'revisit' && React.createElement(RevisitCustomersView, {
+                            customers: revisitCustomers,
+                            revisitCycles: REVISIT_CYCLES,
+                            today
+                        }),
+                        view === 'statistics' && React.createElement(StatisticsView, {
+                            appointments: monthAppts,
+                            therapyStats,
+                            staffStats,
+                            statusStats,
+                            revenueByTherapy,
+                            monthlyRevenue,
+                            statsView,
+                            setStatsView
                         })
                     )
                 ),
@@ -1128,7 +1142,8 @@
         }
 
         function Sidebar({ view, setView, appointments, customers, sidebarOpen, setSidebarOpen }) {
-            return React.createElement('aside', { className: 'sidebar', style: { transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.3s ease' } },
+            const isMobile = window.innerWidth <= 768;
+            return React.createElement('aside', { className: 'sidebar', style: { transform: isMobile && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)', transition: 'transform 0.3s ease', position: isMobile ? 'fixed' : 'fixed' } },
                 React.createElement('div', { className: 'sidebar-brand' },
                     React.createElement('div', { className: 'brand-icon' }, '✨'),
                     React.createElement('h1', null, 'Aurelie'),
@@ -1137,24 +1152,38 @@
                 React.createElement('nav', { className: 'sidebar-menu' },
                     React.createElement('button', {
                         className: `menu-item ${view === 'dashboard' ? 'active' : ''}`,
-                        onClick: () => setView('dashboard')
+                        onClick: () => { setView('dashboard'); setSidebarOpen(false); }
                     },
                         React.createElement('i', { className: 'fas fa-chart-line' }),
-                        '儀表板'
+                        '📊 儀表板'
                     ),
                     React.createElement('button', {
                         className: `menu-item ${view === 'appointments' ? 'active' : ''}`,
-                        onClick: () => setView('appointments')
+                        onClick: () => { setView('appointments'); setSidebarOpen(false); }
                     },
-                        React.createElement('i', { className: 'fas fa-list' }),
-                        '預約管理'
+                        React.createElement('i', { className: 'fas fa-calendar-check' }),
+                        '📅 預約管理'
                     ),
                     React.createElement('button', {
                         className: `menu-item ${view === 'customers' ? 'active' : ''}`,
-                        onClick: () => setView('customers')
+                        onClick: () => { setView('customers'); setSidebarOpen(false); }
                     },
                         React.createElement('i', { className: 'fas fa-users' }),
-                        '客人管理'
+                        '👥 客人管理'
+                    ),
+                    React.createElement('button', {
+                        className: `menu-item ${view === 'revisit' ? 'active' : ''}`,
+                        onClick: () => { setView('revisit'); setSidebarOpen(false); }
+                    },
+                        React.createElement('i', { className: 'fas fa-clock' }),
+                        '⏰ 待回訪客人'
+                    ),
+                    React.createElement('button', {
+                        className: `menu-item ${view === 'statistics' ? 'active' : ''}`,
+                        onClick: () => { setView('statistics'); setSidebarOpen(false); }
+                    },
+                        React.createElement('i', { className: 'fas fa-chart-bar' }),
+                        '📈 統計報表'
                     )
                 ),
                 React.createElement('div', { className: 'sidebar-footer' },
@@ -1232,48 +1261,17 @@
                     )
                 ),
                 React.createElement('div', { style: { marginTop: '40px', marginBottom: '20px' } },
-                    React.createElement('h2', { style: { fontSize: '18px', fontWeight: '700', marginBottom: '16px' } }, '📊 統計報表'),
-                    React.createElement('div', { className: 'filter-tabs' },
-                        React.createElement('button', {
-                            className: `filter-tab ${statsView === 'therapy' ? 'active' : ''}`,
-                            onClick: () => setStatsView('therapy')
-                        }, '療程統計'),
-                        React.createElement('button', {
-                            className: `filter-tab ${statsView === 'staff' ? 'active' : ''}`,
-                            onClick: () => setStatsView('staff')
-                        }, '職員統計'),
-                        React.createElement('button', {
-                            className: `filter-tab ${statsView === 'revenue' ? 'active' : ''}`,
-                            onClick: () => setStatsView('revenue')
-                        }, '收入統計')
+                    React.createElement('h2', { style: { fontSize: '18px', fontWeight: '700', marginBottom: '16px' } }, '本週療程統計'),
+                    React.createElement('div', { className: 'stats-grid' },
+                        Object.entries(therapyStats).length > 0 ?
+                            Object.entries(therapyStats).map(([therapy, count]) =>
+                                React.createElement('div', { key: therapy, className: 'stat-item' },
+                                    React.createElement('div', { className: 'stat-item-label' }, therapy),
+                                    React.createElement('div', { className: 'stat-item-value' }, count)
+                                )
+                            ) :
+                            React.createElement('div', { style: { gridColumn: '1 / -1', textAlign: 'center', color: 'var(--gray-600)' } }, '暫無資料')
                     )
-                ),
-                React.createElement('div', { className: 'stats-grid' },
-                    statsView === 'therapy' && Object.entries(therapyStats).length > 0 ?
-                        Object.entries(therapyStats).map(([therapy, count]) =>
-                            React.createElement('div', { key: therapy, className: 'stat-item' },
-                                React.createElement('div', { className: 'stat-item-label' }, therapy),
-                                React.createElement('div', { className: 'stat-item-value' }, count),
-                                revenueByTherapy[therapy] > 0 && React.createElement('div', { className: 'stat-item-label', style: { marginTop: '8px', color: 'var(--secondary)' } }, `$${revenueByTherapy[therapy].toLocaleString('zh-TW')}`)
-                            )
-                        ) :
-                        statsView === 'staff' && Object.entries(staffStats).length > 0 ?
-                        Object.entries(staffStats).map(([staff, count]) =>
-                            React.createElement('div', { key: staff, className: 'stat-item' },
-                                React.createElement('div', { className: 'stat-item-label' }, staff),
-                                React.createElement('div', { className: 'stat-item-value' }, count),
-                                React.createElement('div', { className: 'stat-item-label', style: { fontSize: '11px', marginTop: '4px' } }, '本月預約')
-                            )
-                        ) :
-                        statsView === 'revenue' && Object.entries(revenueByTherapy).length > 0 ?
-                        Object.entries(revenueByTherapy).map(([therapy, revenue]) =>
-                            React.createElement('div', { key: therapy, className: 'stat-item' },
-                                React.createElement('div', { className: 'stat-item-label' }, therapy),
-                                React.createElement('div', { className: 'stat-item-value' }, `$${revenue.toLocaleString('zh-TW')}`),
-                                React.createElement('div', { className: 'stat-item-label', style: { fontSize: '11px', marginTop: '4px' } }, '療程收入')
-                            )
-                        ) :
-                        React.createElement('div', { style: { gridColumn: '1 / -1', textAlign: 'center', color: 'var(--gray-600)' } }, '暫無資料')
                 )
             );
         }
@@ -1963,6 +1961,112 @@ Aurelie Aesthetic Clinic`;
                             React.createElement('button', { type: 'button', className: 'btn btn-secondary', onClick: onCancel }, '取消')
                         )
                     )
+                )
+            );
+        }
+
+        function RevisitCustomersView({ customers, revisitCycles, today }) {
+            return React.createElement('div', null,
+                React.createElement('div', { className: 'customers-grid' },
+                    customers.length > 0 ?
+                        customers.map(customer => {
+                            if (!customer.therapyHistory || customer.therapyHistory.length === 0) return null;
+                            const lastTherapy = customer.therapyHistory[customer.therapyHistory.length - 1];
+                            const daysSinceLastTherapy = Math.floor((today - new Date(lastTherapy.date)) / 86400000);
+                            const cycle = revisitCycles[lastTherapy.type] || 60;
+                            const daysOverdue = daysSinceLastTherapy - cycle;
+
+                            return React.createElement('div', { key: customer.id, className: 'customer-card', style: { borderLeft: daysOverdue > 30 ? '4px solid var(--danger)' : daysOverdue > 7 ? '4px solid var(--warning)' : '4px solid var(--success)' } },
+                                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' } },
+                                    React.createElement('div', null,
+                                        React.createElement('div', { className: 'customer-name', style: { margin: 0 } }, customer.name),
+                                        React.createElement('div', { className: 'customer-info' },
+                                            React.createElement('i', { className: 'fas fa-phone' }), ' ' + customer.phone
+                                        )
+                                    ),
+                                    React.createElement('div', { style: { textAlign: 'right' } },
+                                        customer.isVIP && React.createElement('span', { style: { fontSize: '18px', marginRight: '8px' } }, '⭐'),
+                                        React.createElement('span', { style: { fontSize: '32px', fontWeight: '700', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' } }, daysOverdue)
+                                    )
+                                ),
+                                React.createElement('div', { style: { fontSize: '13px', color: 'var(--gray-600)', marginBottom: '12px' } },
+                                    React.createElement('div', null, `上次療程：${lastTherapy.type} (${new Date(lastTherapy.date).toLocaleDateString('zh-TW')})`),
+                                    React.createElement('div', null, `應回訪週期：${revisitCycles[lastTherapy.type]} 天`),
+                                    React.createElement('div', { style: { fontWeight: '600', marginTop: '8px', color: daysOverdue > 30 ? 'var(--danger)' : daysOverdue > 7 ? 'var(--warning)' : 'var(--success)' } },
+                                        daysOverdue > 30 ? `⚠️ 已超期 ${daysOverdue} 天！` :
+                                        daysOverdue > 0 ? `⏰ 已超期 ${daysOverdue} 天` :
+                                        `✓ 還需 ${-daysOverdue} 天`
+                                    )
+                                ),
+                                React.createElement('div', { style: { display: 'flex', gap: '8px' } },
+                                    React.createElement('button', { className: 'btn btn-primary', style: { flex: 1, fontSize: '12px', padding: '8px' } },
+                                        React.createElement('i', { className: 'fas fa-phone' }),
+                                        '聯絡'
+                                    ),
+                                    React.createElement('button', { className: 'btn btn-secondary', style: { flex: 1, fontSize: '12px', padding: '8px' } },
+                                        React.createElement('i', { className: 'fas fa-plus' }),
+                                        '預約'
+                                    )
+                                )
+                            );
+                        }).filter(Boolean) :
+                        React.createElement('div', { className: 'empty-state', style: { gridColumn: '1 / -1' } },
+                            React.createElement('i', { className: 'fas fa-check-circle', style: { fontSize: '56px', marginBottom: '20px', color: 'var(--success)' } }),
+                            React.createElement('p', null, '🎉 沒有待回訪的客人，讚！')
+                        )
+                )
+            );
+        }
+
+        function StatisticsView({ appointments, therapyStats, staffStats, statusStats, revenueByTherapy, monthlyRevenue, statsView, setStatsView }) {
+            return React.createElement('div', null,
+                React.createElement('div', { style: { marginBottom: '24px', padding: '20px', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', borderRadius: '16px', color: 'white' } },
+                    React.createElement('div', { style: { fontSize: '14px', opacity: 0.9, marginBottom: '8px' } }, '本月總收入'),
+                    React.createElement('div', { style: { fontSize: '48px', fontWeight: '700' } }, `$${monthlyRevenue.toLocaleString('zh-TW')}`),
+                    React.createElement('div', { style: { fontSize: '13px', opacity: 0.8, marginTop: '8px' } }, `共 ${appointments.length} 筆預約`)
+                ),
+                React.createElement('div', { style: { marginBottom: '24px' } },
+                    React.createElement('h2', { style: { fontSize: '18px', fontWeight: '700', marginBottom: '16px' } }, '📊 統計維度'),
+                    React.createElement('div', { className: 'filter-tabs' },
+                        React.createElement('button', { className: `filter-tab ${statsView === 'therapy' ? 'active' : ''}`, onClick: () => setStatsView('therapy') }, '療程統計'),
+                        React.createElement('button', { className: `filter-tab ${statsView === 'staff' ? 'active' : ''}`, onClick: () => setStatsView('staff') }, '職員統計'),
+                        React.createElement('button', { className: `filter-tab ${statsView === 'status' ? 'active' : ''}`, onClick: () => setStatsView('status') }, '狀態統計'),
+                        React.createElement('button', { className: `filter-tab ${statsView === 'revenue' ? 'active' : ''}`, onClick: () => setStatsView('revenue') }, '收入統計')
+                    )
+                ),
+                React.createElement('div', { className: 'stats-grid' },
+                    statsView === 'therapy' && Object.entries(therapyStats).length > 0 ?
+                        Object.entries(therapyStats).map(([therapy, count]) =>
+                            React.createElement('div', { key: therapy, className: 'stat-item' },
+                                React.createElement('div', { className: 'stat-item-label' }, therapy),
+                                React.createElement('div', { className: 'stat-item-value' }, count),
+                                revenueByTherapy[therapy] > 0 && React.createElement('div', { className: 'stat-item-label', style: { marginTop: '8px', color: 'var(--secondary)' } }, `$${revenueByTherapy[therapy].toLocaleString('zh-TW')}`)
+                            )
+                        ) :
+                        statsView === 'staff' && Object.entries(staffStats).length > 0 ?
+                        Object.entries(staffStats).map(([staff, count]) =>
+                            React.createElement('div', { key: staff, className: 'stat-item' },
+                                React.createElement('div', { className: 'stat-item-label' }, staff),
+                                React.createElement('div', { className: 'stat-item-value' }, count),
+                                React.createElement('div', { className: 'stat-item-label', style: { fontSize: '11px', marginTop: '4px' } }, '本月預約')
+                            )
+                        ) :
+                        statsView === 'status' && Object.entries(statusStats).length > 0 ?
+                        Object.entries(statusStats).map(([status, count]) =>
+                            React.createElement('div', { key: status, className: 'stat-item' },
+                                React.createElement('div', { className: 'stat-item-label' }, STATUS_OPTIONS.find(s => s.value === status)?.label || status),
+                                React.createElement('div', { className: 'stat-item-value' }, count)
+                            )
+                        ) :
+                        statsView === 'revenue' && Object.entries(revenueByTherapy).length > 0 ?
+                        Object.entries(revenueByTherapy).map(([therapy, revenue]) =>
+                            React.createElement('div', { key: therapy, className: 'stat-item' },
+                                React.createElement('div', { className: 'stat-item-label' }, therapy),
+                                React.createElement('div', { className: 'stat-item-value' }, `$${revenue.toLocaleString('zh-TW')}`),
+                                React.createElement('div', { className: 'stat-item-label', style: { fontSize: '11px', marginTop: '4px' } }, '療程收入')
+                            )
+                        ) :
+                        React.createElement('div', { style: { gridColumn: '1 / -1', textAlign: 'center', color: 'var(--gray-600)' } }, '暫無資料')
                 )
             );
         }
