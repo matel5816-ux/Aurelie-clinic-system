@@ -971,17 +971,31 @@
         const CUSTOMERS_KEY = 'aurelie_customers';
 
         // 日期序列化和反序列化工具
-        const serializeAppointment = (apt) => ({
-            ...apt,
-            appointmentDateTime: apt.appointmentDateTime instanceof Date
-                ? apt.appointmentDateTime.toISOString()
-                : apt.appointmentDateTime
-        });
+        const serializeAppointment = (apt) => {
+            let dateStr = apt.appointmentDateTime;
+            if (apt.appointmentDateTime instanceof Date) {
+                if (!isNaN(apt.appointmentDateTime.getTime())) {
+                    dateStr = apt.appointmentDateTime.toISOString();
+                } else {
+                    dateStr = new Date().toISOString();
+                }
+            } else if (typeof apt.appointmentDateTime === 'string') {
+                dateStr = apt.appointmentDateTime;
+            } else {
+                dateStr = new Date().toISOString();
+            }
+            return { ...apt, appointmentDateTime: dateStr };
+        };
 
-        const deserializeAppointment = (apt) => ({
-            ...apt,
-            appointmentDateTime: new Date(apt.appointmentDateTime)
-        });
+        const deserializeAppointment = (apt) => {
+            let dateObj = apt.appointmentDateTime;
+            if (typeof apt.appointmentDateTime === 'string') {
+                dateObj = new Date(apt.appointmentDateTime);
+            } else if (!(apt.appointmentDateTime instanceof Date)) {
+                dateObj = new Date();
+            }
+            return { ...apt, appointmentDateTime: dateObj };
+        };
 
         const STATUS_OPTIONS = [
             { value: 'confirming', label: '確認中', icon: '🔵' },
