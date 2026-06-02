@@ -722,16 +722,32 @@
             const [showCustomerForm, setShowCustomerForm] = useState(false);
             const [filterStatus, setFilterStatus] = useState(null);
             const [selectedNotification, setSelectedNotification] = useState(null);
-            const [dateFilter, setDateFilter] = useState(null); // 'today', 'tomorrow', 'week'
+            const [dateFilter, setDateFilter] = useState(null); // 'today', 'tomorrow', 'week', 'month'
+            const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+            const [customDateRange, setCustomDateRange] = useState({ start: null, end: null });
 
             useEffect(() => {
                 const savedAppts = localStorage.getItem(APPOINTMENTS_KEY);
                 const savedCustomers = localStorage.getItem(CUSTOMERS_KEY);
                 if (savedAppts) {
                     const data = JSON.parse(savedAppts);
-                    setAppointments(data.map(a => ({ ...a, appointmentDateTime: new Date(a.appointmentDateTime) })));
+                    setAppointments(data.map(a => ({
+                        ...a,
+                        appointmentDateTime: new Date(a.appointmentDateTime),
+                        price: a.price || 0,
+                        isNextAppointmentDue: a.isNextAppointmentDue || false
+                    })));
                 }
-                if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
+                if (savedCustomers) {
+                    const data = JSON.parse(savedCustomers);
+                    setCustomers(data.map(c => ({
+                        ...c,
+                        isVIP: c.isVIP || false,
+                        tags: c.tags || [],
+                        isBlacklisted: c.isBlacklisted || false,
+                        therapyHistory: c.therapyHistory || []
+                    })));
+                }
             }, []);
 
             useEffect(() => {
@@ -806,13 +822,50 @@
                 setCustomers(customers.filter(c => c.id !== id));
             };
 
-            const getFilteredAppointments = () => {
-                if (dateFilter === 'today') return todayAppts;
-                if (dateFilter === 'tomorrow') return tomorrowAppts;
-                if (dateFilter === 'week') return weekAppts;
-                if (filterStatus) return appointments.filter(a => a.status === filterStatus);
-                return appointments;
+            const filterCustomersBySearch = (customersToFilter) => {
+                if (!customerSearchQuery) return customersToFilter;
+                const query = customerSearchQuery.toLowerCase();
+                return customersToFilter.filter(c =>
+                    c.name.toLowerCase().includes(query) ||
+                    c.phone.includes(query) ||
+                    (c.tags && c.tags.some(tag => tag.toLowerCase().includes(query)))
+                );
             };
+
+            const checkAppointmentConflict = (newAppt) => {
+                return appointments.some(apt =>
+                    apt.staffName === newAppt.staffName &&
+                    new Date(apt.appointmentDateTime).getTime() === new Date(newAppt.appointmentDateTime).getTime() &&
+                    apt.id !== newAppt.id
+                );
+            };
+
+            const getFilteredAppointments = () => {
+                let filtered = appointments;
+
+                if (customDateRange.start && customDateRange.end) {
+                    const start = new Date(customDateRange.start);
+                    const end = new Date(customDateRange.end);
+                    end.setHours(23, 59, 59, 999);
+                    filtered = filtered.filter(a => {
+                        const aDate = new Date(a.appointmentDateTime);
+                        return aDate >= start && aDate <= end;
+                    });
+                } else if (dateFilter === 'today') {
+                    filtered = todayAppts;
+                } else if (dateFilter === 'tomorrow') {
+                    filtered = tomorrowAppts;
+                } else if (dateFilter === 'week') {
+                    filtered = weekAppts;
+                } else if (dateFilter === 'month') {
+                    filtered = monthAppts;
+                }
+
+                if (filterStatus) filtered = filtered.filter(a => a.status === filterStatus);
+                return filtered;
+            };
+
+            const searchedCustomers = filterCustomersBySearch(customers);
 
             return React.createElement('div', { className: 'app-container' },
                 React.createElement(Sidebar, { view, setView, appointments, customers }),
@@ -848,7 +901,9 @@
                         view === 'appointments' && React.createElement(AppointmentsView, {
                             appointments: getFilteredAppointments(),
                             dateFilter,
-                            onBack: () => { setDateFilter(null); setView('dashboard'); },
+                            customDateRange,
+                            setCustomDateRange,
+                            onBack: () => { setDateFilter(null); setCustomDateRange({ start: null, end: null }); setView('dashboard'); },
                             onDelete: deleteAppointment,
                             onUpdate: updateAppointment,
                             onSelectAppointment: setSelectedNotification
@@ -856,6 +911,8 @@
                         view === 'customers' && React.createElement(CustomersView, {
                             customers,
                             appointments,
+                            searchQuery: customerSearchQuery,
+                            setSearchQuery: setCustomerSearchQuery,
                             onDelete: deleteCustomer
                         })
                     )
@@ -863,7 +920,9 @@
                 showForm && React.createElement(AppointmentForm, {
                     customers,
                     onSubmit: addAppointment,
-                    onCancel: () => setShowForm(false)
+                    onCancel: () => setShowForm(false),
+                    allAppointments: appointments,
+                    checkConflict: checkAppointmentConflict
                 }),
                 showCustomerForm && React.createElement(CustomerForm, {
                     onSubmit: addCustomer,
@@ -977,10 +1036,35 @@
             );
         }
 
-        function AppointmentsView({ appointments, dateFilter, onBack, onDelete, onUpdate, onSelectAppointment }) {
+        function AppointmentsView({ appointments, dateFilter, customDateRange, setCustomDateRange, onBack, onDelete, onUpdate, onSelectAppointment }) {
             return React.createElement('div', null,
-                dateFilter && React.createElement('div', { style: { marginBottom: '24px' } },
-                    React.createElement('button', { className: 'back-btn', onClick: onBack },
+                React.createElement('div', { style: { marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' } },
+                    React.createElement('div', null,
+                        React.createElement('label', { style: { fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '6px' } }, '📅 自訂日期範圍'),
+                        React.createElement('input', {
+                            type: 'date',
+                            value: customDateRange.start || '',
+                            onChange: (e) => setCustomDateRange({ ...customDateRange, start: e.target.value }),
+                            style: { padding: '8px 12px', border: '1px solid var(--gray-300)', borderRadius: '6px', fontSize: '13px' }
+                        })
+                    ),
+                    React.createElement('div', null,
+                        React.createElement('label', { style: { fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '6px' } }, '至'),
+                        React.createElement('input', {
+                            type: 'date',
+                            value: customDateRange.end || '',
+                            onChange: (e) => setCustomDateRange({ ...customDateRange, end: e.target.value }),
+                            style: { padding: '8px 12px', border: '1px solid var(--gray-300)', borderRadius: '6px', fontSize: '13px' }
+                        })
+                    ),
+                    (customDateRange.start || customDateRange.end) && React.createElement('button', {
+                        className: 'back-btn',
+                        onClick: () => setCustomDateRange({ start: null, end: null }),
+                        style: { padding: '8px 12px' }
+                    },
+                        '✕ 清除'
+                    ),
+                    dateFilter && React.createElement('button', { className: 'back-btn', onClick: onBack },
                         React.createElement('i', { className: 'fas fa-arrow-left' }),
                         '返回儀表板'
                     )
@@ -998,6 +1082,7 @@
                                         React.createElement('th', null, '預約時間'),
                                         React.createElement('th', null, '療程'),
                                         React.createElement('th', null, '人員'),
+                                        React.createElement('th', null, '價格'),
                                         React.createElement('th', null, '狀態'),
                                         React.createElement('th', null, '備註'),
                                         React.createElement('th', null, '操作')
@@ -1016,6 +1101,7 @@
                                                 React.createElement('span', { className: `badge badge-${getTherapyBadgeClass(apt.therapyType)}` }, apt.therapyType)
                                             ),
                                             React.createElement('td', null, apt.staffName),
+                                            React.createElement('td', null, apt.price > 0 ? `$${apt.price}` : '-'),
                                             React.createElement('td', null,
                                                 React.createElement('select', {
                                                     value: apt.status,
@@ -1052,20 +1138,68 @@
             );
         }
 
-        function CustomersView({ customers, appointments, onDelete }) {
+        function CustomersView({ customers, appointments, onDelete, searchQuery, setSearchQuery }) {
+            const filteredCustomers = customers.filter(c =>
+                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                c.phone.includes(searchQuery) ||
+                (c.tags && c.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
+            );
+
             return React.createElement('div', null,
+                React.createElement('div', { style: { marginBottom: '24px' } },
+                    React.createElement('input', {
+                        type: 'text',
+                        placeholder: '🔍 搜尋客人名字、電話或標籤...',
+                        value: searchQuery,
+                        onChange: (e) => setSearchQuery(e.target.value),
+                        style: {
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: '1px solid var(--gray-300)',
+                            borderRadius: '8px',
+                            fontSize: '14px'
+                        }
+                    }),
+                    searchQuery && React.createElement('div', {
+                        style: {
+                            marginTop: '8px',
+                            fontSize: '13px',
+                            color: 'var(--gray-600)'
+                        }
+                    },
+                        `找到 ${filteredCustomers.length} 位客人`
+                    )
+                ),
                 React.createElement('div', { className: 'customers-grid' },
-                    customers.length > 0 ?
-                        customers.map(customer => {
+                    filteredCustomers.length > 0 ?
+                        filteredCustomers.map(customer => {
                             const customerAppts = appointments.filter(a => a.clientName === customer.name);
                             const sortedAppts = customerAppts.sort((a, b) => new Date(b.appointmentDateTime) - new Date(a.appointmentDateTime));
-                            return React.createElement('div', { key: customer.id, className: 'customer-card' },
-                                React.createElement('div', { className: 'customer-name' }, customer.name),
+                            return React.createElement('div', { key: customer.id, className: 'customer-card', style: { borderLeft: customer.isBlacklisted ? '4px solid var(--danger)' : 'none', opacity: customer.isBlacklisted ? 0.7 : 1 } },
+                                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' } },
+                                    React.createElement('div', { className: 'customer-name', style: { margin: 0 } }, customer.name),
+                                    React.createElement('div', { style: { display: 'flex', gap: '4px' } },
+                                        customer.isVIP && React.createElement('span', { style: { fontSize: '16px' } }, '⭐'),
+                                        customer.isBlacklisted && React.createElement('span', { style: { fontSize: '16px', title: '黑名單' } }, '🚫')
+                                    )
+                                ),
                                 React.createElement('div', { className: 'customer-info' },
                                     React.createElement('i', { className: 'fas fa-phone' }), ' ' + customer.phone
                                 ),
                                 customer.notes && React.createElement('div', { className: 'customer-info' },
                                     React.createElement('i', { className: 'fas fa-note-sticky' }), ' ' + customer.notes
+                                ),
+                                customer.tags && customer.tags.length > 0 && React.createElement('div', { style: { marginTop: '8px', display: 'flex', gap: '4px', flexWrap: 'wrap' } },
+                                    customer.tags.map((tag, idx) => React.createElement('span', {
+                                        key: idx,
+                                        style: {
+                                            fontSize: '11px',
+                                            padding: '4px 8px',
+                                            background: 'var(--primary-light)',
+                                            color: 'var(--primary)',
+                                            borderRadius: '4px'
+                                        }
+                                    }, tag))
                                 ),
                                 React.createElement('div', { className: 'customer-history' },
                                     React.createElement('div', { style: { fontWeight: '600', marginBottom: '8px', color: 'var(--primary)' } }, `📅 預約記錄 (${sortedAppts.length})`),
@@ -1157,7 +1291,7 @@ Aurelie Aesthetic Clinic`;
             );
         }
 
-        function AppointmentForm({ customers, onSubmit, onCancel }) {
+        function AppointmentForm({ customers, onSubmit, onCancel, allAppointments, checkConflict }) {
             const [data, setData] = useState({
                 clientName: '',
                 appointmentDateTime: '',
@@ -1165,20 +1299,32 @@ Aurelie Aesthetic Clinic`;
                 staffName: '',
                 phoneNumber: '',
                 status: 'pending',
-                notes: ''
+                notes: '',
+                price: 0,
+                isNextAppointmentDue: false,
+                id: Date.now().toString()
             });
 
             const [useExistingCustomer, setUseExistingCustomer] = useState(false);
             const [searchQuery, setSearchQuery] = useState('');
             const [showSearchResults, setShowSearchResults] = useState(false);
+            const [conflictError, setConflictError] = useState(null);
 
             const filteredCustomers = customers.filter(c =>
                 c.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
 
+            const selectedCustomer = customers.find(c => c.name === data.clientName);
+            const hasConflict = data.appointmentDateTime && data.staffName ? checkConflict({ ...data, id: 'new' }) : false;
+
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if (data.clientName && data.appointmentDateTime && data.therapyType && data.staffName && data.phoneNumber) {
+                    if (hasConflict) {
+                        if (!window.confirm(`⚠️ 警告：${data.staffName} 在該時間已有預約。\\n確認要添加嗎？`)) {
+                            return;
+                        }
+                    }
                     onSubmit({ ...data, appointmentDateTime: new Date(data.appointmentDateTime) });
                 } else {
                     alert('請填寫所有必填欄位');
@@ -1186,8 +1332,47 @@ Aurelie Aesthetic Clinic`;
             };
 
             return React.createElement('div', { className: 'modal-overlay' },
-                React.createElement('div', { className: 'modal' },
+                React.createElement('div', { className: 'modal', style: { maxHeight: '95vh', overflow: 'auto' } },
                     React.createElement('h2', null, '✨ 新增預約'),
+                    selectedCustomer && selectedCustomer.isBlacklisted && React.createElement('div', {
+                        style: {
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '2px solid var(--danger)',
+                            borderRadius: '8px',
+                            padding: '12px 16px',
+                            marginBottom: '20px',
+                            color: 'var(--danger)',
+                            fontSize: '14px'
+                        }
+                    },
+                        '🚫 注意：此客人已被標記為黑名單'
+                    ),
+                    selectedCustomer && selectedCustomer.isVIP && React.createElement('div', {
+                        style: {
+                            background: 'rgba(147, 51, 234, 0.1)',
+                            border: '2px solid var(--primary)',
+                            borderRadius: '8px',
+                            padding: '12px 16px',
+                            marginBottom: '20px',
+                            color: 'var(--primary)',
+                            fontSize: '14px'
+                        }
+                    },
+                        '⭐ 提醒：此為 VIP 客人，請確保優質服務'
+                    ),
+                    hasConflict && React.createElement('div', {
+                        style: {
+                            background: 'rgba(245, 158, 11, 0.1)',
+                            border: '2px solid var(--warning)',
+                            borderRadius: '8px',
+                            padding: '12px 16px',
+                            marginBottom: '20px',
+                            color: 'var(--warning)',
+                            fontSize: '14px'
+                        }
+                    },
+                        `⚠️ 衝突警告：${data.staffName} 在該時間已有預約`
+                    ),
                     React.createElement('form', { onSubmit: handleSubmit },
                         React.createElement('div', { style: { display: 'flex', gap: '12px', marginBottom: '20px' } },
                             React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
@@ -1227,9 +1412,11 @@ Aurelie Aesthetic Clinic`;
                                                     });
                                                     setSearchQuery(c.name);
                                                     setShowSearchResults(false);
-                                                }
+                                                },
+                                                style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' }
                                             },
-                                                `${c.name} - ${c.phone}`
+                                                React.createElement('span', null, `${c.name} - ${c.phone}`),
+                                                c.isVIP && React.createElement('span', { style: { fontSize: '14px' } }, '⭐')
                                             )
                                         ) :
                                         React.createElement('div', { className: 'search-item' }, '找不到客人')
@@ -1266,9 +1453,25 @@ Aurelie Aesthetic Clinic`;
                                 React.createElement('input', { type: 'text', value: data.staffName, onChange: (e) => setData({ ...data, staffName: e.target.value }), placeholder: '輸入人員名字', required: true })
                             ),
                             React.createElement('div', { className: 'form-group' },
+                                React.createElement('label', null, '💰 療程價格'),
+                                React.createElement('input', { type: 'number', value: data.price, onChange: (e) => setData({ ...data, price: parseInt(e.target.value) || 0 }), placeholder: '輸入價格', min: 0 })
+                            )
+                        ),
+                        React.createElement('div', { className: 'form-row' },
+                            React.createElement('div', { className: 'form-group' },
                                 React.createElement('label', null, '🏷️ 預約狀態'),
                                 React.createElement('select', { value: data.status, onChange: (e) => setData({ ...data, status: e.target.value }) },
                                     STATUS_OPTIONS.map(s => React.createElement('option', { key: s.value, value: s.value }, `${s.icon} ${s.label}`))
+                                )
+                            ),
+                            React.createElement('div', { className: 'form-group' },
+                                React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
+                                    React.createElement('input', {
+                                        type: 'checkbox',
+                                        checked: data.isNextAppointmentDue,
+                                        onChange: (e) => setData({ ...data, isNextAppointmentDue: e.target.checked })
+                                    }),
+                                    '待回訪'
                                 )
                             )
                         ),
@@ -1289,11 +1492,17 @@ Aurelie Aesthetic Clinic`;
             const [data, setData] = useState({
                 name: '',
                 phone: '',
-                notes: ''
+                notes: '',
+                isVIP: false,
+                tags: [],
+                isBlacklisted: false,
+                therapyHistory: []
             });
+            const [newTag, setNewTag] = useState('');
+            const AVAILABLE_TAGS = ['常客', '轉介', '會員', '初診', '複診'];
 
             return React.createElement('div', { className: 'modal-overlay' },
-                React.createElement('div', { className: 'modal' },
+                React.createElement('div', { className: 'modal', style: { maxHeight: '95vh', overflow: 'auto' } },
                     React.createElement('h2', null, '👥 新增客人'),
                     React.createElement('form', {
                         onSubmit: (e) => {
@@ -1310,6 +1519,99 @@ Aurelie Aesthetic Clinic`;
                         React.createElement('div', { className: 'form-group' },
                             React.createElement('label', null, '📞 電話號碼 *'),
                             React.createElement('input', { type: 'tel', value: data.phone, onChange: (e) => setData({ ...data, phone: e.target.value }), placeholder: '輸入電話號碼', required: true })
+                        ),
+                        React.createElement('div', { style: { display: 'flex', gap: '12px', marginBottom: '20px' } },
+                            React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
+                                React.createElement('input', {
+                                    type: 'checkbox',
+                                    checked: data.isVIP,
+                                    onChange: (e) => setData({ ...data, isVIP: e.target.checked })
+                                }),
+                                '⭐ VIP 客人'
+                            ),
+                            React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
+                                React.createElement('input', {
+                                    type: 'checkbox',
+                                    checked: data.isBlacklisted,
+                                    onChange: (e) => setData({ ...data, isBlacklisted: e.target.checked })
+                                }),
+                                '🚫 黑名單'
+                            )
+                        ),
+                        React.createElement('div', { className: 'form-group' },
+                            React.createElement('label', null, '🏷️ 客人標籤'),
+                            React.createElement('div', { style: { display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' } },
+                                AVAILABLE_TAGS.map(tag =>
+                                    React.createElement('button', {
+                                        key: tag,
+                                        type: 'button',
+                                        onClick: () => {
+                                            if (data.tags.includes(tag)) {
+                                                setData({ ...data, tags: data.tags.filter(t => t !== tag) });
+                                            } else {
+                                                setData({ ...data, tags: [...data.tags, tag] });
+                                            }
+                                        },
+                                        style: {
+                                            padding: '6px 12px',
+                                            border: data.tags.includes(tag) ? 'none' : '1px solid var(--gray-300)',
+                                            background: data.tags.includes(tag) ? 'var(--primary)' : 'var(--white)',
+                                            color: data.tags.includes(tag) ? 'var(--white)' : 'var(--gray-700)',
+                                            borderRadius: '6px',
+                                            fontSize: '12px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }
+                                    },
+                                        tag
+                                    )
+                                )
+                            ),
+                            React.createElement('div', { style: { display: 'flex', gap: '8px' } },
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: newTag,
+                                    onChange: (e) => setNewTag(e.target.value),
+                                    placeholder: '自訂標籤',
+                                    style: { flex: 1, padding: '8px 12px', border: '1px solid var(--gray-300)', borderRadius: '6px', fontSize: '13px' }
+                                }),
+                                React.createElement('button', {
+                                    type: 'button',
+                                    onClick: () => {
+                                        if (newTag && !data.tags.includes(newTag)) {
+                                            setData({ ...data, tags: [...data.tags, newTag] });
+                                            setNewTag('');
+                                        }
+                                    },
+                                    style: { padding: '8px 16px', background: 'var(--gray-200)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }
+                                },
+                                    '新增'
+                                )
+                            )
+                        ),
+                        data.tags.length > 0 && React.createElement('div', { style: { marginBottom: '16px', display: 'flex', gap: '6px', flexWrap: 'wrap' } },
+                            data.tags.map((tag, idx) =>
+                                React.createElement('span', {
+                                    key: idx,
+                                    style: {
+                                        fontSize: '12px',
+                                        padding: '4px 10px',
+                                        background: 'var(--primary-light)',
+                                        color: 'var(--primary)',
+                                        borderRadius: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }
+                                },
+                                    tag,
+                                    React.createElement('button', {
+                                        type: 'button',
+                                        onClick: () => setData({ ...data, tags: data.tags.filter((_, i) => i !== idx) }),
+                                        style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: 0 }
+                                    }, '✕')
+                                )
+                            )
                         ),
                         React.createElement('div', { className: 'form-group' },
                             React.createElement('label', null, '📝 備註（過敏/特殊需求等）'),
