@@ -59,26 +59,45 @@
         }
 
         .sidebar-brand {
-            padding: 32px 20px;
+            padding: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
         }
 
-        .brand-icon {
-            font-size: 28px;
+        .brand-logo {
+            width: 100%;
+            height: auto;
+            max-width: 180px;
             margin-bottom: 12px;
         }
 
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            padding: 12px 0;
+        }
+
+        .brand-logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--primary);
+            font-style: italic;
+        }
+
         .sidebar-brand h1 {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 600;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
+            opacity: 0.9;
         }
 
         .sidebar-brand p {
-            font-size: 11px;
-            opacity: 0.7;
+            font-size: 10px;
+            opacity: 0.6;
             letter-spacing: 0.3px;
         }
 
@@ -1027,6 +1046,12 @@
                             dateFilter,
                             customDateRange,
                             setCustomDateRange,
+                            today,
+                            tomorrow,
+                            weekStart,
+                            weekEnd,
+                            monthStart,
+                            monthEnd,
                             onBack: () => { setDateFilter(null); setCustomDateRange({ start: null, end: null }); setView('dashboard'); },
                             onDelete: deleteAppointment,
                             onUpdate: updateAppointment,
@@ -1078,9 +1103,11 @@
 
             return React.createElement('aside', { className: 'sidebar', style: sidebarStyle },
                 React.createElement('div', { className: 'sidebar-brand' },
-                    React.createElement('div', { className: 'brand-icon' }, '✨'),
-                    React.createElement('h1', null, 'AURELIE'),
-                    React.createElement('p', null, '醫美診所預約系統')
+                    React.createElement('div', { className: 'brand-logo-container' },
+                        React.createElement('div', { className: 'brand-logo-text' }, 'Aurelie')
+                    ),
+                    React.createElement('h1', null, '奧蕾莉醫美診所'),
+                    React.createElement('p', null, '預約管理系統')
                 ),
                 React.createElement('nav', { className: 'sidebar-menu' },
                     React.createElement('button', {
@@ -1176,7 +1203,7 @@
             );
         }
 
-        function AppointmentsView({ appointments, dateFilter, customDateRange, setCustomDateRange, onBack, onDelete, onUpdate, onSelectAppointment }) {
+        function AppointmentsView({ appointments, dateFilter, customDateRange, setCustomDateRange, onBack, onDelete, onUpdate, onSelectAppointment, today, tomorrow, weekEnd, monthEnd, weekStart, monthStart }) {
             const exportToCSV = () => {
                 if (appointments.length === 0) {
                     alert('沒有預約數據可導出');
@@ -1211,36 +1238,60 @@
                 link.click();
             };
 
+            const setQuickFilter = (start, end) => {
+                setCustomDateRange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] });
+            };
+
             return React.createElement('div', null,
-                React.createElement('div', { style: { marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' } },
-                    React.createElement('div', null,
-                        React.createElement('label', { style: { fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px', color: 'var(--secondary)' } }, '開始日期'),
-                        React.createElement('input', {
-                            type: 'date',
-                            value: customDateRange.start || '',
-                            onChange: (e) => setCustomDateRange({ ...customDateRange, start: e.target.value }),
-                            style: { padding: '8px 12px', border: '1px solid var(--light-gray)', borderRadius: '6px', fontSize: '13px' }
-                        })
-                    ),
-                    React.createElement('div', null,
-                        React.createElement('label', { style: { fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px', color: 'var(--secondary)' } }, '結束日期'),
-                        React.createElement('input', {
-                            type: 'date',
-                            value: customDateRange.end || '',
-                            onChange: (e) => setCustomDateRange({ ...customDateRange, end: e.target.value }),
-                            style: { padding: '8px 12px', border: '1px solid var(--light-gray)', borderRadius: '6px', fontSize: '13px' }
-                        })
-                    ),
-                    (customDateRange.start || customDateRange.end) && React.createElement('button', {
-                        className: 'btn btn-secondary',
-                        onClick: () => setCustomDateRange({ start: null, end: null }),
-                        style: { padding: '8px 12px' }
-                    },
-                        '清除'
-                    ),
-                    dateFilter && React.createElement('button', { className: 'btn btn-secondary', onClick: onBack },
-                        React.createElement('i', { className: 'fas fa-arrow-left' }),
-                        '返回'
+                React.createElement('div', { style: { marginBottom: '24px' } },
+                    React.createElement('h3', { style: { fontSize: '13px', fontWeight: '600', marginBottom: '12px', color: 'var(--secondary)', letterSpacing: '0.3px' } }, '快速篩選'),
+                    React.createElement('div', { className: 'filter-tabs', style: { marginBottom: '16px' } },
+                        React.createElement('button', {
+                            className: `filter-tab ${customDateRange.start && customDateRange.start === today.toISOString().split('T')[0] && customDateRange.end === today.toISOString().split('T')[0] ? 'active' : ''}`,
+                            onClick: () => setQuickFilter(today, today)
+                        }, '📅 今日'),
+                        React.createElement('button', {
+                            className: `filter-tab ${customDateRange.start && customDateRange.start === tomorrow.toISOString().split('T')[0] && customDateRange.end === tomorrow.toISOString().split('T')[0] ? 'active' : ''}`,
+                            onClick: () => setQuickFilter(tomorrow, tomorrow)
+                        }, '📆 明日'),
+                        React.createElement('button', {
+                            className: `filter-tab ${customDateRange.start && customDateRange.start === weekStart.toISOString().split('T')[0] && customDateRange.end === weekEnd.toISOString().split('T')[0] ? 'active' : ''}`,
+                            onClick: () => setQuickFilter(weekStart, weekEnd)
+                        }, '📊 本周'),
+                        React.createElement('button', {
+                            className: `filter-tab ${customDateRange.start && customDateRange.start === monthStart.toISOString().split('T')[0] && customDateRange.end === monthEnd.toISOString().split('T')[0] ? 'active' : ''}`,
+                            onClick: () => setQuickFilter(monthStart, monthEnd)
+                        }, '📈 本月')
+                    )
+                ),
+                React.createElement('div', { style: { marginBottom: '24px', padding: '16px', background: 'var(--accent)', borderRadius: '8px' } },
+                    React.createElement('h3', { style: { fontSize: '13px', fontWeight: '600', marginBottom: '12px', color: 'var(--secondary)', letterSpacing: '0.3px' } }, '自訂日期範圍'),
+                    React.createElement('div', { style: { display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' } },
+                        React.createElement('div', null,
+                            React.createElement('label', { style: { fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px', color: 'var(--secondary)' } }, '開始日期'),
+                            React.createElement('input', {
+                                type: 'date',
+                                value: customDateRange.start || '',
+                                onChange: (e) => setCustomDateRange({ ...customDateRange, start: e.target.value }),
+                                style: { padding: '8px 12px', border: '1px solid var(--light-gray)', borderRadius: '6px', fontSize: '13px', background: 'var(--white)' }
+                            })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { style: { fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px', color: 'var(--secondary)' } }, '結束日期'),
+                            React.createElement('input', {
+                                type: 'date',
+                                value: customDateRange.end || '',
+                                onChange: (e) => setCustomDateRange({ ...customDateRange, end: e.target.value }),
+                                style: { padding: '8px 12px', border: '1px solid var(--light-gray)', borderRadius: '6px', fontSize: '13px', background: 'var(--white)' }
+                            })
+                        ),
+                        (customDateRange.start || customDateRange.end) && React.createElement('button', {
+                            className: 'btn btn-secondary',
+                            onClick: () => setCustomDateRange({ start: null, end: null }),
+                            style: { padding: '8px 12px' }
+                        },
+                            '🔄 清除'
+                        )
                     )
                 ),
                 React.createElement('div', { className: 'data-section' },
