@@ -1279,6 +1279,40 @@
         }
 
         function AppointmentsView({ appointments, dateFilter, customDateRange, setCustomDateRange, onBack, onDelete, onUpdate, onSelectAppointment }) {
+            const exportToCSV = () => {
+                if (appointments.length === 0) {
+                    alert('沒有預約數據可導出');
+                    return;
+                }
+                const headers = ['客人', '預約時間', '療程', '人員', '電話', '價格', '狀態', '備註'];
+                const rows = appointments.map(apt => [
+                    apt.clientName,
+                    new Date(apt.appointmentDateTime).toLocaleString('zh-TW'),
+                    apt.therapyType,
+                    apt.staffName,
+                    apt.phoneNumber,
+                    apt.price || 0,
+                    STATUS_OPTIONS.find(s => s.value === apt.status)?.label || apt.status,
+                    apt.notes || ''
+                ]);
+
+                const csvContent = [headers, ...rows]
+                    .map(row => row.map(cell => {
+                        const cellStr = String(cell || '');
+                        return cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')
+                            ? `"${cellStr.replace(/"/g, '""')}"`
+                            : cellStr;
+                    }).join(','))
+                    .join('\n');
+
+                const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                const date = new Date().toLocaleDateString('zh-TW').replace(/\//g, '-');
+                link.download = `aurelie-appointments-${date}.csv`;
+                link.click();
+            };
+
             return React.createElement('div', null,
                 React.createElement('div', { style: { marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' } },
                     React.createElement('div', null,
@@ -1312,8 +1346,16 @@
                     )
                 ),
                 React.createElement('div', { className: 'data-section' },
-                    React.createElement('div', { className: 'section-header' },
-                        React.createElement('h2', null, `${appointments.length} 筆預約`)
+                    React.createElement('div', { className: 'section-header', style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                        React.createElement('h2', null, `${appointments.length} 筆預約`),
+                        React.createElement('button', {
+                            className: 'btn btn-secondary',
+                            onClick: exportToCSV,
+                            style: { display: 'flex', alignItems: 'center', gap: '8px' }
+                        },
+                            React.createElement('i', { className: 'fas fa-download' }),
+                            '導出 CSV'
+                        )
                     ),
                     window.innerWidth > 768 ?
                     React.createElement('div', { className: 'table-container' },
