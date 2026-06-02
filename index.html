@@ -970,6 +970,19 @@
         const APPOINTMENTS_KEY = 'aurelie_appointments';
         const CUSTOMERS_KEY = 'aurelie_customers';
 
+        // 日期序列化和反序列化工具
+        const serializeAppointment = (apt) => ({
+            ...apt,
+            appointmentDateTime: apt.appointmentDateTime instanceof Date
+                ? apt.appointmentDateTime.toISOString()
+                : apt.appointmentDateTime
+        });
+
+        const deserializeAppointment = (apt) => ({
+            ...apt,
+            appointmentDateTime: new Date(apt.appointmentDateTime)
+        });
+
         const STATUS_OPTIONS = [
             { value: 'confirming', label: '確認中', icon: '🔵' },
             { value: 'confirmed', label: '已確認', icon: '🟢' },
@@ -1009,26 +1022,21 @@
                     if (isMounted) {
                         if (snapshot.exists()) {
                             const data = Object.values(snapshot.val());
-                            setAppointments(data.map(a => ({
-                                ...a,
-                                appointmentDateTime: new Date(a.appointmentDateTime),
-                                price: a.price || 0,
-                                isNextAppointmentDue: a.isNextAppointmentDue || false
-                            })));
+                            setAppointments(data.map(deserializeAppointment));
                         }
                         // 監聽後續更新
                         appointmentsRef.on('child_added', (snapshot) => {
                             const newApt = snapshot.val();
                             setAppointments(prev => {
                                 if (!prev.find(a => a.id === newApt.id)) {
-                                    return [...prev, { ...newApt, appointmentDateTime: new Date(newApt.appointmentDateTime) }];
+                                    return [...prev, deserializeAppointment(newApt)];
                                 }
                                 return prev;
                             });
                         });
                         appointmentsRef.on('child_changed', (snapshot) => {
                             const updatedApt = snapshot.val();
-                            setAppointments(prev => prev.map(a => a.id === updatedApt.id ? { ...updatedApt, appointmentDateTime: new Date(updatedApt.appointmentDateTime) } : a));
+                            setAppointments(prev => prev.map(a => a.id === updatedApt.id ? deserializeAppointment(updatedApt) : a));
                         });
                         appointmentsRef.on('child_removed', (snapshot) => {
                             setAppointments(prev => prev.filter(a => a.id !== snapshot.key));
@@ -1083,7 +1091,7 @@
             useEffect(() => {
                 if (firebaseLoaded && appointments.length > 0) {
                     appointments.forEach(apt => {
-                        db.ref('appointments/' + apt.id).set(apt).catch(err => console.error('保存預約失敗:', err));
+                        db.ref('appointments/' + apt.id).set(serializeAppointment(apt)).catch(err => console.error('保存預約失敗:', err));
                     });
                 }
             }, [appointments, firebaseLoaded]);
