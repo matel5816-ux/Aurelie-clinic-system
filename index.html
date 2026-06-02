@@ -80,10 +80,10 @@
         }
 
         .brand-logo-text {
-            font-size: 24px;
+            font-size: 32px;
             font-weight: 700;
             letter-spacing: 2px;
-            color: var(--primary);
+            color: #fbbf24;
             font-style: italic;
         }
 
@@ -819,6 +819,8 @@
             const [customers, setCustomers] = useState([]);
             const [showForm, setShowForm] = useState(false);
             const [showCustomerForm, setShowCustomerForm] = useState(false);
+            const [editingAppointment, setEditingAppointment] = useState(null);
+            const [editingCustomer, setEditingCustomer] = useState(null);
             const [filterStatus, setFilterStatus] = useState(null);
             const [selectedNotification, setSelectedNotification] = useState(null);
             const [dateFilter, setDateFilter] = useState(null);
@@ -980,7 +982,12 @@
             };
 
             const addAppointment = (data) => {
-                setAppointments([...appointments, { ...data, id: Date.now().toString() }]);
+                if (editingAppointment) {
+                    setAppointments(appointments.map(a => a.id === editingAppointment.id ? { ...data, id: editingAppointment.id } : a));
+                    setEditingAppointment(null);
+                } else {
+                    setAppointments([...appointments, { ...data, id: Date.now().toString() }]);
+                }
                 setShowForm(false);
             };
 
@@ -993,7 +1000,12 @@
             };
 
             const addCustomer = (data) => {
-                setCustomers([...customers, { ...data, id: Date.now().toString() }]);
+                if (editingCustomer) {
+                    setCustomers(customers.map(c => c.id === editingCustomer.id ? { ...data, id: editingCustomer.id } : c));
+                    setEditingCustomer(null);
+                } else {
+                    setCustomers([...customers, { ...data, id: Date.now().toString() }]);
+                }
                 setShowCustomerForm(false);
             };
 
@@ -1089,13 +1101,15 @@
                 showForm && React.createElement(AppointmentForm, {
                     customers,
                     onSubmit: addAppointment,
-                    onCancel: () => setShowForm(false),
+                    onCancel: () => { setShowForm(false); setEditingAppointment(null); },
                     allAppointments: appointments,
-                    checkConflict: checkAppointmentConflict
+                    checkConflict: checkAppointmentConflict,
+                    editingAppointment
                 }),
                 showCustomerForm && React.createElement(CustomerForm, {
                     onSubmit: addCustomer,
-                    onCancel: () => setShowCustomerForm(false)
+                    onCancel: () => { setShowCustomerForm(false); setEditingCustomer(null); },
+                    editingCustomer
                 }),
                 selectedNotification && React.createElement(NotificationModal, {
                     appointment: selectedNotification,
@@ -1354,11 +1368,21 @@
                                                 )
                                             ),
                                             React.createElement('td', null,
-                                                React.createElement('button', {
-                                                    className: 'btn btn-small btn-danger',
-                                                    onClick: (e) => { e.stopPropagation(); onDelete(apt.id); }
-                                                },
-                                                    React.createElement('i', { className: 'fas fa-trash' })
+                                                React.createElement('div', { style: { display: 'flex', gap: '8px' } },
+                                                    React.createElement('button', {
+                                                        className: 'btn btn-small btn-secondary',
+                                                        onClick: (e) => { e.stopPropagation(); setEditingAppointment(apt); setShowForm(true); },
+                                                        title: '編輯'
+                                                    },
+                                                        React.createElement('i', { className: 'fas fa-edit' })
+                                                    ),
+                                                    React.createElement('button', {
+                                                        className: 'btn btn-small btn-danger',
+                                                        onClick: (e) => { e.stopPropagation(); onDelete(apt.id); },
+                                                        title: '刪除'
+                                                    },
+                                                        React.createElement('i', { className: 'fas fa-trash' })
+                                                    )
                                                 )
                                             )
                                         )
@@ -1491,7 +1515,21 @@
                                         React.createElement('div', { style: { fontSize: '11px', color: 'var(--gray)' } }, '暫無預約')
                                 ),
                                 React.createElement('div', { style: { display: 'flex', gap: '8px', marginTop: '12px' } },
-                                    React.createElement('button', { className: 'btn btn-small btn-danger', onClick: () => onDelete(customer.id), style: { flex: 1 } },
+                                    React.createElement('button', {
+                                        className: 'btn btn-small btn-secondary',
+                                        onClick: () => { setEditingCustomer(customer); setShowCustomerForm(true); },
+                                        style: { flex: 1 },
+                                        title: '編輯客人資料'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-edit' }),
+                                        '編輯'
+                                    ),
+                                    React.createElement('button', {
+                                        className: 'btn btn-small btn-danger',
+                                        onClick: () => onDelete(customer.id),
+                                        style: { flex: 1 },
+                                        title: '刪除客人'
+                                    },
                                         React.createElement('i', { className: 'fas fa-trash' }),
                                         '刪除'
                                     )
@@ -1610,8 +1648,8 @@ Aurelie Aesthetic Clinic`;
             );
         }
 
-        function AppointmentForm({ customers, onSubmit, onCancel, allAppointments, checkConflict }) {
-            const [data, setData] = useState({
+        function AppointmentForm({ customers, onSubmit, onCancel, allAppointments, checkConflict, editingAppointment }) {
+            const [data, setData] = useState(editingAppointment || {
                 clientName: '',
                 appointmentDateTime: '',
                 therapyType: '雷射',
@@ -1651,7 +1689,7 @@ Aurelie Aesthetic Clinic`;
 
             return React.createElement('div', { className: 'modal-overlay' },
                 React.createElement('div', { className: 'modal', style: { maxHeight: '95vh', overflow: 'auto' } },
-                    React.createElement('h2', null, '新增預約'),
+                    React.createElement('h2', null, editingAppointment ? '編輯預約' : '新增預約'),
                     selectedCustomer && selectedCustomer.isBlacklisted && React.createElement('div', {
                         style: {
                             background: 'rgba(201, 83, 76, 0.1)',
@@ -1808,7 +1846,7 @@ Aurelie Aesthetic Clinic`;
                             React.createElement('textarea', { value: data.notes, onChange: (e) => setData({ ...data, notes: e.target.value }), placeholder: '例如：對碘過敏、怕痛等', rows: 3 })
                         ),
                         React.createElement('div', { className: 'form-actions' },
-                            React.createElement('button', { type: 'submit', className: 'btn btn-primary' }, '新增預約'),
+                            React.createElement('button', { type: 'submit', className: 'btn btn-primary' }, editingAppointment ? '保存修改' : '新增預約'),
                             React.createElement('button', { type: 'button', className: 'btn btn-secondary', onClick: onCancel }, '取消')
                         )
                     )
@@ -1816,8 +1854,8 @@ Aurelie Aesthetic Clinic`;
             );
         }
 
-        function CustomerForm({ onSubmit, onCancel }) {
-            const [data, setData] = useState({
+        function CustomerForm({ onSubmit, onCancel, editingCustomer }) {
+            const [data, setData] = useState(editingCustomer || {
                 name: '',
                 phone: '',
                 notes: '',
@@ -1831,7 +1869,7 @@ Aurelie Aesthetic Clinic`;
 
             return React.createElement('div', { className: 'modal-overlay' },
                 React.createElement('div', { className: 'modal', style: { maxHeight: '95vh', overflow: 'auto' } },
-                    React.createElement('h2', null, '新增客人'),
+                    React.createElement('h2', null, editingCustomer ? '編輯客人' : '新增客人'),
                     React.createElement('form', {
                         onSubmit: (e) => {
                             e.preventDefault();
@@ -1901,7 +1939,7 @@ Aurelie Aesthetic Clinic`;
                             React.createElement('textarea', { value: data.notes, onChange: (e) => setData({ ...data, notes: e.target.value }), placeholder: '輸入客人相關資訊', rows: 3 })
                         ),
                         React.createElement('div', { className: 'form-actions' },
-                            React.createElement('button', { type: 'submit', className: 'btn btn-primary' }, '新增客人'),
+                            React.createElement('button', { type: 'submit', className: 'btn btn-primary' }, editingCustomer ? '保存修改' : '新增客人'),
                             React.createElement('button', { type: 'button', className: 'btn btn-secondary', onClick: onCancel }, '取消')
                         )
                     )
