@@ -6,6 +6,8 @@
     <title>奧蕾莉醫美診所 - 預約管理系統</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -795,6 +797,23 @@
             }
         }
     </style>
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHrfLXrrpfOZhm9dsnITRFk2ewysA3dPY",
+            authDomain: "aurelie-clinic.firebaseapp.com",
+            databaseURL: "https://aurelie-clinic-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "aurelie-clinic",
+            storageBucket: "aurelie-clinic.firebasestorage.app",
+            messagingSenderId: "982945052488",
+            appId: "1:982945052488:web:6489c44eb9363d3306257d",
+            measurementId: "G-50P89F02JF"
+        };
+
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+    </script>
 </head>
 <body>
     <div id="root"></div>
@@ -831,37 +850,105 @@
             const [statsView, setStatsView] = useState('therapy');
             const [selectedCustomerHistory, setSelectedCustomerHistory] = useState(null);
 
+            const [firebaseLoaded, setFirebaseLoaded] = useState(false);
+
+            // 初始化 Firebase 數據監聽（只執行一次）
             useEffect(() => {
-                const savedAppts = localStorage.getItem(APPOINTMENTS_KEY);
-                const savedCustomers = localStorage.getItem(CUSTOMERS_KEY);
-                if (savedAppts) {
-                    const data = JSON.parse(savedAppts);
-                    setAppointments(data.map(a => ({
-                        ...a,
-                        appointmentDateTime: new Date(a.appointmentDateTime),
-                        price: a.price || 0,
-                        isNextAppointmentDue: a.isNextAppointmentDue || false
-                    })));
-                }
-                if (savedCustomers) {
-                    const data = JSON.parse(savedCustomers);
-                    setCustomers(data.map(c => ({
-                        ...c,
-                        isVIP: c.isVIP || false,
-                        tags: c.tags || [],
-                        isBlacklisted: c.isBlacklisted || false,
-                        therapyHistory: c.therapyHistory || []
-                    })));
-                }
+                let isMounted = true;
+
+                // 監聽預約數據
+                const appointmentsRef = db.ref('appointments');
+                appointmentsRef.once('value', (snapshot) => {
+                    if (isMounted) {
+                        if (snapshot.exists()) {
+                            const data = Object.values(snapshot.val());
+                            setAppointments(data.map(a => ({
+                                ...a,
+                                appointmentDateTime: new Date(a.appointmentDateTime),
+                                price: a.price || 0,
+                                isNextAppointmentDue: a.isNextAppointmentDue || false
+                            })));
+                        }
+                        // 監聽後續更新
+                        appointmentsRef.on('child_added', (snapshot) => {
+                            const newApt = snapshot.val();
+                            setAppointments(prev => {
+                                if (!prev.find(a => a.id === newApt.id)) {
+                                    return [...prev, { ...newApt, appointmentDateTime: new Date(newApt.appointmentDateTime) }];
+                                }
+                                return prev;
+                            });
+                        });
+                        appointmentsRef.on('child_changed', (snapshot) => {
+                            const updatedApt = snapshot.val();
+                            setAppointments(prev => prev.map(a => a.id === updatedApt.id ? { ...updatedApt, appointmentDateTime: new Date(updatedApt.appointmentDateTime) } : a));
+                        });
+                        appointmentsRef.on('child_removed', (snapshot) => {
+                            setAppointments(prev => prev.filter(a => a.id !== snapshot.key));
+                        });
+                    }
+                });
+
+                // 監聽客人數據
+                const customersRef = db.ref('customers');
+                customersRef.once('value', (snapshot) => {
+                    if (isMounted) {
+                        if (snapshot.exists()) {
+                            const data = Object.values(snapshot.val());
+                            setCustomers(data.map(c => ({
+                                ...c,
+                                isVIP: c.isVIP || false,
+                                tags: c.tags || [],
+                                isBlacklisted: c.isBlacklisted || false,
+                                therapyHistory: c.therapyHistory || []
+                            })));
+                        }
+                        // 監聽後續更新
+                        customersRef.on('child_added', (snapshot) => {
+                            const newCustomer = snapshot.val();
+                            setCustomers(prev => {
+                                if (!prev.find(c => c.id === newCustomer.id)) {
+                                    return [...prev, newCustomer];
+                                }
+                                return prev;
+                            });
+                        });
+                        customersRef.on('child_changed', (snapshot) => {
+                            const updatedCustomer = snapshot.val();
+                            setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+                        });
+                        customersRef.on('child_removed', (snapshot) => {
+                            setCustomers(prev => prev.filter(c => c.id !== snapshot.key));
+                        });
+                    }
+                });
+
+                setFirebaseLoaded(true);
+
+                return () => {
+                    isMounted = false;
+                    appointmentsRef.off();
+                    customersRef.off();
+                };
             }, []);
 
+            // 當預約改變時保存到 Firebase（跳過初始加載）
             useEffect(() => {
-                localStorage.setItem(APPOINTMENTS_KEY, JSON.stringify(appointments));
-            }, [appointments]);
+                if (firebaseLoaded && appointments.length > 0) {
+                    appointments.forEach(apt => {
+                        db.ref('appointments/' + apt.id).set(apt).catch(err => console.error('保存預約失敗:', err));
+                    });
+                }
+            }, [appointments, firebaseLoaded]);
 
+            // 當客人改變時保存到 Firebase（跳過初始加載）
             useEffect(() => {
-                localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
-            }, [customers]);
+                if (firebaseLoaded && customers.length > 0) {
+                    customers.forEach(cust => {
+                        db.ref('customers/' + cust.id).set(cust).catch(err => console.error('保存客人失敗:', err));
+                    });
+                }
+            }, [customers, firebaseLoaded]);
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
